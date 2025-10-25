@@ -37,7 +37,8 @@ docker run -d -p 80:80 meteo-dashboard
 
 ## Fonctionnalités
 - Données en temps réel (rafraîchies toutes les 10 min) : température, humidité, pression, vent, pluie 1h/24h
-- Graphique des dernières 24h (température + humidité)
+- Vent: rafale max du jour, des 7 derniers jours et du mois via /v2/pws/history/daily (windgustHigh)
+- Graphique intrajournalier (depuis 00:00) température + humidité + barres de précipitations
 - Lever/Coucher du soleil (si lat/lon disponibles via l'observation courante)
 - PWA installable (manifest + service worker via vite-plugin-pwa)
 - Interface responsive et moderne (Tailwind)
@@ -57,6 +58,7 @@ docker run -d -p 80:80 meteo-dashboard
 - `Dockerfile` — build + Nginx
 
 ## Notes API Weather Underground
-- Endpoints utilisés: `/v2/pws/observations/current` et `/v2/pws/observations/hourly`
+- Endpoints utilisés: `/v2/pws/observations/current` (live), `/v2/pws/observations/all/1day` (séries intrajournalières depuis 00:00, ~5 min), et `/v2/pws/history/daily` (agrégats journaliers pour 7/30 jours)
 - Paramètre `units=m` pour les unités métriques (°C, km/h, hPa)
+- Toutes les requêtes incluent `numericPrecision=decimal` pour des valeurs décimales précises
 - Les réponses peuvent varier selon la station; le code gère les champs manquants.

@@ -1,6 +1,6 @@
 {
   "name": "Le Barobiou",
-  "short_name": "Barobiou",
+  "short_name": "Le Barobiou",
   "description": "Dashboard météo personnel (Weather Underground)",
   "start_url": "/",
   "display": "standalone",
