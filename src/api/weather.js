@@ -488,7 +488,7 @@ export async function fetchSunTimes(lat, lon, date = new Date()) {
     const url = `https://api.met.no/weatherapi/sunrise/3.0/sun?lat=${lat}&lon=${lon}&date=${iso}&offset=${offset}`;
 
     const request = (async () => {
-      const res = await fetch(url, { headers: { 'User-Agent': 'LeBarobiou/1.0 (https://example.com)' } });
+      const res = await fetch(url);
       if (!res.ok) return null;
       const json = await res.json();
       const first = json?.properties?.sunrise?.[0] || json?.properties;
@@ -518,7 +518,7 @@ export async function fetchMoonInfo(lat, lon, date = new Date()) {
     const url = `https://api.met.no/weatherapi/sunrise/3.0/moon?lat=${lat}&lon=${lon}&date=${iso}&offset=${offset}`;
 
     const request = (async () => {
-      const res = await fetch(url, { headers: { 'User-Agent': 'LeBarobiou/1.0 (https://example.com)' } });
+      const res = await fetch(url);
       if (!res.ok) return null;
       const json = await res.json();
       const props = json?.properties || {};
