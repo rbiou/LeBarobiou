@@ -8,8 +8,8 @@ export default defineConfig(({ mode }) => ({
     plugins: [
         react(),
         VitePWA({
-            registerType: 'autoUpdate', // 👈 corrige la faute de frappe
-            includeAssets: ['apple-touch-icon.png'],
+            registerType: 'autoUpdate',
+            includeAssets: ['marker-icon.png', 'marker-icon-2x.png', 'marker-shadow.png'],
             manifest: {
                 name: 'Le Barobiou',
                 short_name: 'Barobiou',
@@ -22,7 +22,7 @@ export default defineConfig(({ mode }) => ({
                 lang: 'fr',
                 icons: [
                     {
-                        src: 'pwa-192.png', // 👈 pas besoin du "/" ici
+                        src: 'pwa-192.png',
                         sizes: '192x192',
                         type: 'image/png'
                     },
