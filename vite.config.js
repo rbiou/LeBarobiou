@@ -17,8 +17,8 @@ export default defineConfig(({ mode }) => ({
                 theme_color: '#f8fafc',
                 background_color: '#f8fafc',
                 display: 'standalone',
-                start_url: '/LeBarobiou/', // 👈 chemin correct pour ton hébergement GitHub Pages
-                scope: '/LeBarobiou/',     // 👈 facultatif mais évite certains 404
+                start_url: '/LeBarobiou/',
+                scope: '/LeBarobiou/',
                 lang: 'fr',
                 icons: [
                     {
