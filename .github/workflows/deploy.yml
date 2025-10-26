@@ -30,8 +30,15 @@ jobs:
           VITE_API_URL: ${{ secrets.VITE_API_URL }}
         run: npm run build
 
+      # 🔍 Vérification du contenu généré avant déploiement
+      - name: List dist contents
+        run: ls -R dist
+
+      # 🚀 Déploiement complet vers GitHub Pages
       - name: Deploy to GitHub Pages
         uses: peaceiris/actions-gh-pages@v4
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           publish_dir: ./dist
+          force_orphan: true     # 🔧 force un nouveau commit "propre" sur gh-pages
+          commit_message: "Deploy Vite build 🚀"
