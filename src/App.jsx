@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react'
 import WeatherCard from './components/WeatherCard.jsx'
 import WeatherChart from './components/WeatherChart.jsx'
-import { fetchCurrentObservation, fetchHourly, fetchHourly7Day, fetchSunTimes, fetchPrecipHistoryDays, fetchGustHighToday, fetchGustHigh7d, fetchGustHigh30d, fetchMoonInfo, getNextMoonPhases } from './api/weather.js'
+import { fetchCurrentObservation, fetchHourly, fetchHourly7Day, fetchSunTimes, fetchPrecipHistoryDays, fetchMoonInfo, getNextMoonPhases } from './api/weather.js'
 import { WiSunrise, WiSunset, WiMoonAltFull } from 'react-icons/wi'
 import RadarMap from "./components/RadarMap.jsx";
 import heroCover from '/header.jpeg'
@@ -45,6 +45,15 @@ function formatTime(date) {
   return date ? new Date(date).toLocaleString('fr-FR', { hour: '2-digit', minute: '2-digit', day: '2-digit', month: '2-digit' }) : '—'
 }
 
+function getParisStartOfDay(date) {
+  const reference = date instanceof Date ? date : new Date(date)
+  if (!(reference instanceof Date) || Number.isNaN(reference.getTime())) return null
+  const parisInstant = new Date(reference.toLocaleString('en-US', { timeZone: 'Europe/Paris' }))
+  if (Number.isNaN(parisInstant.getTime())) return null
+  parisInstant.setHours(0, 0, 0, 0)
+  return parisInstant
+}
+
 export default function App() {
   const [current, setCurrent] = useState(null)
   const [hourly, setHourly] = useState([])
@@ -52,8 +61,8 @@ export default function App() {
   const [sunTomorrow, setSunTomorrow] = useState(null)
   const [moon, setMoon] = useState(null)
   const [hourly7d, setHourly7d] = useState([])
-  const [hourly7dFetched, setHourly7dFetched] = useState(false)
   const [dailyHistory, setDailyHistory] = useState([])
+  const [dailyHistoryError, setDailyHistoryError] = useState(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
   const [lastUpdate, setLastUpdate] = useState(null)
@@ -64,27 +73,115 @@ export default function App() {
   const [gust7d, setGust7d] = useState({ value: null, when: null })
   const [gust30d, setGust30d] = useState({ value: null, when: null })
   const [chartRange, setChartRange] = useState('day')
-  const [chartLoading, setChartLoading] = useState(false)
-  const [chartError, setChartError] = useState(null)
 
   const { canInstall, promptInstall } = useInstallPrompt()
 
   const refresh = async () => {
     try {
       setLoading(true)
+      setRainLoading(true)
       setError(null)
-      const [curr, hours, gToday, g7, g30] = await Promise.all([
+      setDailyHistoryError(null)
+
+      const historyPromise = fetchPrecipHistoryDays(30, { units: 'm' }).catch((err) => {
+        console.error(err)
+        setDailyHistoryError("Impossible de charger l'historique des précipitations sur 30 jours.")
+        return null
+      })
+
+      const [curr, hours, hours7days, history] = await Promise.all([
         fetchCurrentObservation({ units: 'm' }),
         fetchHourly({ units: 'm' }),
-        fetchGustHighToday({ units: 'm' }),
-        fetchGustHigh7d({ units: 'm' }),
-        fetchGustHigh30d({ units: 'm' }),
+        fetchHourly7Day({ units: 'm' }),
+        historyPromise,
       ])
       setCurrent(curr)
       setHourly(hours)
-      setGustToday(gToday || { value: null, when: null })
-      setGust7d(g7 || { value: null, when: null })
-      setGust30d(g30 || { value: null, when: null })
+      const series7d = Array.isArray(hours7days) ? hours7days : []
+      setHourly7d(series7d)
+
+      if (Array.isArray(history) && history.length) {
+        const mappedHistory = history
+          .map((entry) => {
+            const ts = entry.date instanceof Date ? entry.date : new Date(entry.date)
+            if (!(ts instanceof Date) || Number.isNaN(ts.getTime())) return null
+            const baseTemp = entry.tempAvg ?? entry.tempMean ?? null
+            const temp = baseTemp != null
+              ? Number(baseTemp)
+              : entry.tempHigh != null && entry.tempLow != null
+                ? (Number(entry.tempHigh) + Number(entry.tempLow)) / 2
+                : null
+            const precipTotal = entry.precipTotal != null ? Number(entry.precipTotal) : 0
+            const gustHigh = entry.gustHigh != null ? Number(entry.gustHigh) : null
+            const gustHighTime = entry.gustHighTime instanceof Date
+              ? entry.gustHighTime
+              : (entry.date instanceof Date ? entry.date : null)
+            return {
+              ts,
+              temp,
+              tempMin: entry.tempLow != null ? Number(entry.tempLow) : null,
+              tempMax: entry.tempHigh != null ? Number(entry.tempHigh) : null,
+              humidity: entry.humidityAvg != null ? Number(entry.humidityAvg) : null,
+              pressure: entry.pressureAvg != null ? Number(entry.pressureAvg) : null,
+              precipTotal,
+              precipAmount: precipTotal,
+              gustHigh: Number.isFinite(gustHigh) ? gustHigh : null,
+              gustHighTime: gustHighTime instanceof Date && !Number.isNaN(gustHighTime.getTime()) ? gustHighTime : null,
+            }
+          })
+          .filter(Boolean)
+          .sort((a, b) => a.ts - b.ts)
+
+        setDailyHistory(mappedHistory)
+
+        const sum30 = mappedHistory.reduce((sum, entry) => sum + (Number(entry.precipTotal) || 0), 0)
+        setRain30d(Number.isFinite(sum30) ? sum30 : null)
+
+        const parisToday = getParisStartOfDay(new Date())
+        const start7 = parisToday ? new Date(parisToday) : null
+        if (start7) start7.setDate(start7.getDate() - 6)
+
+        let rain7Sum = null
+        if (start7) {
+          rain7Sum = mappedHistory.reduce((sum, entry) => {
+            const dayStart = getParisStartOfDay(entry.ts)
+            if (!dayStart || dayStart < start7) return sum
+            return sum + (Number(entry.precipTotal) || 0)
+          }, 0)
+        }
+        setRain7d(rain7Sum != null && Number.isFinite(rain7Sum) ? rain7Sum : null)
+
+        const gustFromHistory = (days) => {
+          if (!parisToday) return { value: null, when: null }
+          const start = new Date(parisToday)
+          start.setDate(start.getDate() - (days - 1))
+          let max = null
+          let when = null
+          mappedHistory.forEach((entry) => {
+            const day = getParisStartOfDay(entry.ts)
+            if (!day) return
+            if (day < start) return
+            const gust = Number(entry.gustHigh)
+            if (!Number.isFinite(gust)) return
+            if (max == null || gust > max) {
+              max = gust
+              when = entry.gustHighTime instanceof Date ? entry.gustHighTime : entry.ts
+            }
+          })
+          return { value: max, when }
+        }
+
+        setGustToday(gustFromHistory(1))
+        setGust7d(gustFromHistory(7))
+        setGust30d(gustFromHistory(30))
+      } else {
+        setDailyHistory([])
+        setRain30d(null)
+        setRain7d(null)
+        setGustToday({ value: null, when: null })
+        setGust7d({ value: null, when: null })
+        setGust30d({ value: null, when: null })
+      }
 
       // Fetch sun (today + tomorrow) and moon info when coords available
       if (curr?.lat && curr?.lon) {
@@ -108,6 +205,7 @@ export default function App() {
       setError(e.message || 'Erreur inconnue')
     } finally {
       setLoading(false)
+      setRainLoading(false)
     }
   }
 
@@ -302,108 +400,44 @@ export default function App() {
 
   // Precipitation aggregates and event detection
   const precipAgg = useMemo(() => {
-    const arr = hourly || []
-    if (arr.length === 0) return { last24: 0, eventHours: 0, eventSum: 0 }
-    const last24 = arr.reduce((s, d) => s + (Number(d.precip) || 0), 0)
+    const arr = Array.isArray(hourly) ? hourly : []
+    if (arr.length === 0) return { sinceMidnight: 0, last24: 0, eventHours: 0, eventSum: 0 }
+
+    let sinceMidnight = 0
+    arr.forEach((entry) => {
+      const total = Number(entry?.precipTotal)
+      if (Number.isFinite(total) && total > sinceMidnight) {
+        sinceMidnight = total
+      }
+    })
 
     // Detect current rain event by scanning backwards until a dry bucket
     let startIdx = null
     let endIdx = arr.length - 1
     for (let i = arr.length - 1; i >= 0; i--) {
-      const p = Number(arr[i].precip) || 0
+      const p = Number(arr[i]?.precip) || 0
       if (p > 0) { startIdx = i } else if (startIdx !== null) { break }
     }
 
     let eventSum = 0
     let eventHours = 0
     if (startIdx !== null) {
-      // Sum precip over the event window
-      for (let i = startIdx; i <= endIdx; i++) eventSum += (Number(arr[i].precip) || 0)
-      // Compute duration using timestamps; include one bucket duration
+      for (let i = startIdx; i <= endIdx; i++) {
+        eventSum += Number(arr[i]?.precip) || 0
+      }
       let durationMs = Math.max(0, new Date(arr[endIdx].ts) - new Date(arr[startIdx].ts))
       let bucketMs = 5 * 60 * 1000
-      if (startIdx > 0) bucketMs = Math.max(1, new Date(arr[startIdx].ts) - new Date(arr[startIdx - 1].ts))
-      else if (endIdx + 1 < arr.length) bucketMs = Math.max(1, new Date(arr[endIdx + 1].ts) - new Date(arr[endIdx].ts))
+      if (startIdx > 0) {
+        bucketMs = Math.max(1, new Date(arr[startIdx].ts) - new Date(arr[startIdx - 1].ts))
+      } else if (endIdx + 1 < arr.length) {
+        bucketMs = Math.max(1, new Date(arr[endIdx + 1].ts) - new Date(arr[endIdx].ts))
+      }
       durationMs += bucketMs
       eventHours = durationMs / (60 * 60 * 1000)
     }
 
-    return { last24, eventHours, eventSum }
+    return { sinceMidnight, last24: sinceMidnight, eventHours, eventSum }
   }, [hourly])
-
-  useEffect(() => {
-    // fetch 7d/30d sums lazily after we have some data
-    const load = async () => {
-      try {
-        setRainLoading(true)
-        const history = await fetchPrecipHistoryDays(30, { units: 'm' })
-        if (!Array.isArray(history) || history.length === 0) {
-          setRain7d(null)
-          setRain30d(null)
-          setDailyHistory([])
-        } else {
-          const mappedHistory = history.map((entry) => {
-            const ts = entry.date instanceof Date ? entry.date : new Date(entry.date)
-            const baseTemp = entry.tempAvg ?? entry.tempMean ?? null
-            const temp = baseTemp != null
-              ? Number(baseTemp)
-              : entry.tempHigh != null && entry.tempLow != null
-                ? (Number(entry.tempHigh) + Number(entry.tempLow)) / 2
-                : null
-            return {
-              ts,
-              temp,
-              tempMin: entry.tempLow != null ? Number(entry.tempLow) : null,
-              tempMax: entry.tempHigh != null ? Number(entry.tempHigh) : null,
-              humidity: entry.humidityAvg != null ? Number(entry.humidityAvg) : null,
-              pressure: entry.pressureAvg != null ? Number(entry.pressureAvg) : null,
-              precip: entry.precipTotal ?? 0,
-            }
-          }).filter((item) => item.ts instanceof Date && !Number.isNaN(item.ts.getTime()))
-          setDailyHistory(mappedHistory)
-          const totals = mappedHistory.map((entry) => Number(entry.precip) || 0)
-          const last7 = totals.slice(-7).reduce((sum, val) => sum + val, 0)
-          const last30 = totals.slice(-30).reduce((sum, val) => sum + val, 0)
-          setRain7d(last7)
-          setRain30d(last30)
-        }
-      } catch (_) {
-        // ignore
-      } finally {
-        setRainLoading(false)
-      }
-    }
-    if (hourly && hourly.length) load()
-  }, [hourly])
-
-  useEffect(() => {
-    if (chartRange !== '7d' || hourly7dFetched) return
-    let cancelled = false
-    setChartLoading(true)
-    setChartError(null)
-    fetchHourly7Day({ units: 'm' })
-      .then((series) => {
-        if (cancelled) return
-        setHourly7d(Array.isArray(series) ? series : [])
-        setHourly7dFetched(true)
-      })
-      .catch((err) => {
-        if (cancelled) return
-        console.error(err)
-        setChartError("Impossible de charger les 7 derniers jours.")
-      })
-      .finally(() => {
-        if (!cancelled) setChartLoading(false)
-      })
-
-    return () => { cancelled = true }
-  }, [chartRange, hourly7dFetched])
-
-  useEffect(() => {
-    if (chartRange !== '7d') {
-      setChartError(null)
-    }
-  }, [chartRange])
 
   const hasHourlyData = Boolean(hourly && hourly.length)
   const lastHourlyPoint = hasHourlyData ? hourly[hourly.length - 1] : null
@@ -472,12 +506,12 @@ export default function App() {
   }, [chartRange, hourly, hourly7d, dailyHistory])
 
   const chartIsLoading = useMemo(() => {
-    if (chartRange === 'day') return false
-    if (chartRange === '7d') return chartLoading && (!hourly7dFetched || !hourly7d.length)
-    return rainLoading && dailyHistory.length === 0
-  }, [chartRange, chartLoading, hourly7dFetched, hourly7d, rainLoading, dailyHistory])
+    if (chartRange === '30d') return rainLoading && dailyHistory.length === 0
+    if (chartRange === '7d') return loading && hourly7d.length === 0
+    return loading && hourly.length === 0
+  }, [chartRange, rainLoading, dailyHistory, loading, hourly7d, hourly])
 
-  const chartErrorMessage = chartRange === '7d' ? chartError : null
+  const chartErrorMessage = chartRange === '30d' ? dailyHistoryError : null
 
   return (
     <div className="min-h-screen">

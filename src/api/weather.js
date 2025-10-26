@@ -197,6 +197,7 @@ export async function fetchHourly({ units = 'm' } = {}) {
       pressureMax: d.pressureMax,
       precip: intervalPrecip,
       precipAmount: intervalPrecip,
+      precipTotal: cum != null && Number.isFinite(cum) ? cum : null,
     };
   });
 
@@ -290,6 +291,7 @@ export async function fetchHourly7Day({ units = 'm' } = {}) {
         pressure: d.pressure,
         precip: intervalPrecip,
         precipAmount: intervalPrecip,
+        precipTotal: cum != null && Number.isFinite(cum) ? cum : null,
       };
     });
 
@@ -377,10 +379,31 @@ async function fetchPrecipHistoryRange({ startDate, endDate, units = 'm' } = {})
           : pickNumeric(
             d.metric?.pressureAvg,
             d.metric?.pressureMean,
-            d.metric?.pressure,
-            d.pressureAvg,
-            d.pressure
-          );
+          d.metric?.pressure,
+          d.pressureAvg,
+          d.pressure
+        );
+        const gustHigh = pickNumeric(
+          d.metric?.windgustHigh,
+          d.metric?.windgustMax,
+          d.windgustHigh,
+          d.windgustMax,
+          d.imperial?.windgustHigh,
+          d.imperial?.windgustMax
+        );
+        const gustHighTimeRaw =
+          d.windgustHighTime ??
+          d.windgustTimeHigh ??
+          d.obsTimeUtc ??
+          d.valid_time_gmt ??
+          d.epoch ??
+          null;
+        const gustHighTime = (() => {
+          if (gustHighTimeRaw == null) return null;
+          if (typeof gustHighTimeRaw === 'number') return new Date(gustHighTimeRaw * 1000);
+          const candidate = new Date(gustHighTimeRaw);
+          return Number.isNaN(candidate.getTime()) ? null : candidate;
+        })();
         const ts =
           (typeof d.obsTimeUtc === 'string' && d.obsTimeUtc) ? new Date(d.obsTimeUtc) :
           (typeof d.valid_time_gmt === 'number') ? new Date(d.valid_time_gmt * 1000) :
@@ -395,6 +418,8 @@ async function fetchPrecipHistoryRange({ startDate, endDate, units = 'm' } = {})
             tempLow: tempLow,
             humidityAvg: humidityAvg,
             pressureAvg: pressureAvg,
+            gustHigh: Number.isFinite(Number(gustHigh)) ? Number(gustHigh) : null,
+            gustHighTime: gustHighTime,
           };
         })
         .filter((entry) => entry.date instanceof Date && !Number.isNaN(entry.date.getTime()))

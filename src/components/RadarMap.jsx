@@ -20,31 +20,60 @@ export default function RadarMap({ embedded = false } = {}) {
     const formatUnixTime = (unixSeconds) => formatTimeLabel(new Date(unixSeconds * 1000))
 
     useEffect(() => {
-        const controller = new AbortController()
+        let isMounted = true
+
         const loadFrames = async () => {
             try {
                 const response = await fetch('https://tilecache.rainviewer.com/api/maps.json', {
-                    signal: controller.signal,
-                    cache: 'no-store',
+                    mode: 'cors',
+                    cache: 'no-cache',
+                    credentials: 'omit',
                 })
                 if (!response.ok) throw new Error(`RainViewer maps.json ${response.status}`)
-                const data = await response.json()
-                const past = Array.isArray(data?.radar?.past) ? data.radar.past : []
-                const nowcast = Array.isArray(data?.radar?.nowcast) ? data.radar.nowcast : []
-                const combined = [...past, ...nowcast]
-                    .filter(frame => typeof frame?.time === 'number')
-                    .sort((a, b) => a.time - b.time)
 
-                setFrames(combined)
-                setCurrentFrameIndex(0)
+                const payload = await response.json()
+
+                const timestamps = Array.isArray(payload)
+                    ? payload
+                    : [
+                        ...(Array.isArray(payload?.radar?.past) ? payload.radar.past.map((f) => f.time ?? f) : []),
+                        ...(Array.isArray(payload?.radar?.nowcast) ? payload.radar.nowcast.map((f) => f.time ?? f) : []),
+                    ]
+
+                const framesList = [...new Set(
+                    timestamps
+                        .map((value) => {
+                            if (typeof value === 'number') return value
+                            if (typeof value === 'string') {
+                                const parsed = Number(value)
+                                return Number.isFinite(parsed) ? parsed : null
+                            }
+                            return null
+                        })
+                        .filter((value) => value != null)
+                )]
+                    .sort((a, b) => a - b)
+                    .map((time) => ({
+                        time,
+                        url: `https://tilecache.rainviewer.com/v2/radar/${time}/256/{z}/{x}/{y}/2/1_1.png`,
+                    }))
+
+                if (isMounted) {
+                    setFrames(framesList)
+                    setCurrentFrameIndex(0)
+                }
             } catch (error) {
-                if (error.name !== 'AbortError') console.error('RainViewer fetch failed', error)
-                setFrames([])
+                if (isMounted) {
+                    console.error('RainViewer fetch failed', error)
+                    setFrames([])
+                }
             }
         }
 
         loadFrames()
-        return () => controller.abort()
+        return () => {
+            isMounted = false
+        }
     }, [])
 
     useEffect(() => {
@@ -140,6 +169,7 @@ export default function RadarMap({ embedded = false } = {}) {
     const timelineInnerWidth = 'w-full'
     const controlsWidth = embedded ? 'max-w-xl w-full' : 'max-w-2xl w-full'
     const mapHeight = embedded ? 'min(60vh, 360px)' : '400px'
+    const lightningTileUrl = 'https://tilecache.rainviewer.com/v2/lightning/latest/256/{z}/{x}/{y}.png'
 
     return (
         <div className={wrapperClasses}>
@@ -153,9 +183,18 @@ export default function RadarMap({ embedded = false } = {}) {
                 </Marker>
                 {frames.length > 0 && (
                     <TileLayer
-                        url={`https://tilecache.rainviewer.com/v2/radar/${frames[currentFrameIndex].path ?? frames[currentFrameIndex].time}/256/{z}/{x}/{y}/2/1_1.png`}
+                        key={`radar-${frames[currentFrameIndex].time}`}
+                        url={frames[currentFrameIndex].url}
                         opacity={0.7}
                         attribution="Radar: RainViewer"
+                    />
+                )}
+                {showLightning && (
+                    <TileLayer
+                        key="lightning-overlay"
+                        url={lightningTileUrl}
+                        opacity={0.8}
+                        attribution="Lightning: RainViewer"
                     />
                 )}
             </MapContainer>

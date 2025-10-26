@@ -197,16 +197,32 @@ export default function WeatherChart({ data, range = 'day', onRangeChange, loadi
             <YAxis yAxisId="rain" orientation="right" hide domain={[0, 'auto']} tickFormatter={oneDecimal} />
             <Tooltip
               labelFormatter={(v) => new Date(v).toLocaleString('fr-FR', { hour: '2-digit', minute: '2-digit', weekday: 'short' })}
-              formatter={(value, name) => {
-                if (name === 'Température (°C)') return [Number(value).toFixed(1), name]
-                if (name === 'Température min (°C)') return [Number(value).toFixed(1), name]
-                if (name === 'Température max (°C)') return [Number(value).toFixed(1), name]
-                if (name === 'Humidité (%)') return [Number(value).toFixed(1), name]
-                if (name === 'Pression (hPa)') return [Number(value).toFixed(1), name]
-                if (name === 'Intensité (mm)') return [Number(value).toFixed(1), name]
-                if (name === 'Total intervalle (mm)') return [Number(value).toFixed(1), name]
-                if (name === 'Cumul pluie (mm)') return [Number(value).toFixed(1), name]
-                return [value, name]
+              formatter={(value, name, props) => {
+                const { dataKey } = props || {}
+                const toFixed = (val) => {
+                  const parsed = Number(val)
+                  return Number.isFinite(parsed) ? parsed.toFixed(1) : '—'
+                }
+                switch (dataKey) {
+                  case 'precipCum':
+                    return [toFixed(value), 'Cumul pluie (mm)']
+                  case 'temperature':
+                    return [toFixed(value), 'Température (°C)']
+                  case 'temperatureMin':
+                    return [toFixed(value), 'Température min (°C)']
+                  case 'temperatureMax':
+                    return [toFixed(value), 'Température max (°C)']
+                  case 'humidity':
+                    return [toFixed(value), 'Humidité (%)']
+                  case 'pressure':
+                    return [toFixed(value), 'Pression (hPa)']
+                  case 'precipRate':
+                    return [toFixed(value), 'Intensité (mm)']
+                  case 'precipAmount':
+                    return [toFixed(value), 'Total intervalle (mm)']
+                  default:
+                    return [value, name]
+                }
               }}
             />
             <Legend
