@@ -9,7 +9,7 @@ export default defineConfig(({ mode }) => ({
         react(),
         VitePWA({
             registerType: 'autoUpdate',
-            includeAssets: ['marker-icon.png', 'marker-icon-2x.png', 'marker-shadow.png'],
+            includeAssets: ['apple-touch-icon.png', 'favicon.ico', 'marker-icon.png', 'marker-icon-2x.png', 'marker-shadow.png'],
             manifest: {
                 name: 'Le Barobiou',
                 short_name: 'Barobiou',
