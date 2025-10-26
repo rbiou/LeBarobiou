@@ -26,8 +26,8 @@ jobs:
 
       - name: Inject secrets into .env file for Vite
         run: |
-          echo "VITE_API_KEY=${{ secrets.VITE_API_KEY }}" >> .env
-          echo "VITE_API_URL=${{ secrets.VITE_API_URL }}" >> .env
+          echo "VITE_WU_API_KEY=${{ secrets.VITE_WU_API_KEY }}" >> .env
+          echo "VITE_WU_STATION_ID=${{ secrets.VITE_WU_STATION_ID }}" >> .env
           echo "✅ .env file created with build-time secrets"
 
       - name: Build the project
