@@ -126,7 +126,7 @@ export default function RadarMap({ embedded = false } = {}) {
 
     return (
         <div className={wrapperClasses}>
-            <MapContainer center={centerAigre} zoom={8} style={{ height: mapHeight, width: '100%' }}>
+            <MapContainer center={centerAigre} zoom={8} style={{ height: mapHeight, width: '100%' }} className="relative z-0">
                 <TileLayer
                     url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
                     attribution="© OpenStreetMap contributors"

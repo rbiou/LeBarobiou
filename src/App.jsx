@@ -4,6 +4,7 @@ import WeatherChart from './components/WeatherChart.jsx'
 import { fetchCurrentObservation, fetchHourly, fetchHourly7Day, fetchSunTimes, fetchPrecipHistoryDays, fetchGustHighToday, fetchGustHigh7d, fetchGustHigh30d, fetchMoonInfo, getNextMoonPhases } from './api/weather.js'
 import { WiSunrise, WiSunset, WiMoonAltFull } from 'react-icons/wi'
 import RadarMap from "./components/RadarMap.jsx";
+import heroCover from '/header.jpeg'
 
 function useInstallPrompt() {
   const [deferredPrompt, setDeferredPrompt] = useState(null)
@@ -480,14 +481,20 @@ export default function App() {
 
   return (
     <div className="min-h-screen">
-      <header className="sticky top-0 z-10 backdrop-blur bg-bg/80 border-b border-soft">
-        <div className="mx-auto container-max px-4 py-4 flex items-center justify-between">
-          <h1 className="text-xl font-semibold">Le Barobiou</h1>
-          {canInstall && (
-            <button onClick={promptInstall} className="px-3 py-1.5 rounded-lg bg-primary text-white text-sm font-medium shadow-soft active:scale-[0.98]">
-              Installer
-            </button>
-          )}
+      <header className="relative z-10">
+        <div className="mx-auto container-max px-4 pt-6">
+          <div className="relative overflow-hidden rounded-3xl border border-white/10 bg-slate-900/80 shadow-soft">
+            <img
+              src={heroCover}
+              alt="Couverture Le Barobiou"
+              className="absolute inset-0 h-full w-full object-cover opacity-90"
+              loading="lazy"
+            />
+            <div className="absolute inset-0 bg-gradient-to-br from-slate-950/80 via-slate-950/30 to-slate-900/10" />
+            <div className="relative px-6 py-12 text-white sm:px-10">
+              <h1 className="text-2xl font-semibold sm:text-3xl">Le Barobiou</h1>
+            </div>
+          </div>
         </div>
       </header>
 
@@ -673,9 +680,9 @@ export default function App() {
 
                   {sun?.sunrise && sun?.sunset ? (
                     <>
-                      <div className="grid grid-cols-1 gap-3 text-sm sm:grid-cols-2">
-                        <div className="flex items-center gap-3 rounded-xl bg-amber-50 px-3 py-8">
-                          <div className="flex h-10 w-10 items-center justify-center rounded-full bg-white text-amber-500 shadow-sm">
+                      <div className="grid grid-cols-1 gap-3 text-sm sm:grid-cols-2 sm:items-stretch">
+                        <div className="flex h-full min-h-[140px] items-center gap-4 rounded-2xl bg-amber-50 px-4 py-6">
+                          <div className="flex h-12 w-12 items-center justify-center rounded-full bg-white text-amber-500 shadow-soft">
                             <WiSunrise className="text-2xl" />
                           </div>
                           <div>
@@ -683,8 +690,8 @@ export default function App() {
                             <div className="text-base font-semibold text-slate-900">{formatClock(sun.sunrise)}</div>
                           </div>
                         </div>
-                        <div className="flex items-center gap-3 rounded-xl bg-rose-50 px-3 py-3">
-                          <div className="flex h-10 w-10 items-center justify-center rounded-full bg-white text-rose-500 shadow-sm">
+                        <div className="flex h-full min-h-[140px] items-center gap-4 rounded-2xl bg-rose-50 px-4 py-6">
+                          <div className="flex h-12 w-12 items-center justify-center rounded-full bg-white text-rose-500 shadow-soft">
                             <WiSunset className="text-2xl" />
                           </div>
                           <div>
@@ -733,17 +740,17 @@ export default function App() {
                     <span className="text-xs text-slate-400">{formatDateLabel(new Date())}</span>
                   </div>
 
-                  <div className="grid grid-cols-1 gap-3 text-sm sm:grid-cols-2">
-                    <div className="flex items-center gap-3 rounded-xl bg-indigo-50 px-3 py-3">
-                      <div className="flex h-10 w-10 items-center justify-center rounded-full bg-white text-lg font-semibold text-indigo-600 shadow-sm">🌕</div>
+                  <div className="grid grid-cols-1 gap-3 text-sm sm:grid-cols-2 sm:items-stretch">
+                    <div className="flex h-full min-h-[140px] items-center gap-4 rounded-2xl bg-indigo-50 px-4 py-6">
+                      <div className="flex h-12 w-12 items-center justify-center rounded-full bg-white text-lg font-semibold text-indigo-600 shadow-soft">🌕</div>
                       <div className="text-left">
                         <div className="text-[11px] uppercase tracking-wide text-indigo-600">Prochaine pleine lune</div>
                         <div className="text-base font-semibold text-slate-900">{formatDateLabel(moonNextPhases.nextFull)}</div>
                         <div className="text-[11px] text-indigo-500">{formatDaysUntil(moonNextPhases.nextFull)}</div>
                       </div>
                     </div>
-                    <div className="flex items-center gap-3 rounded-xl bg-slate-100 px-3 py-3">
-                      <div className="flex h-10 w-10 items-center justify-center rounded-full bg-white text-lg font-semibold text-slate-700 shadow-sm">🌑</div>
+                    <div className="flex h-full min-h-[140px] items-center gap-4 rounded-2xl bg-slate-100 px-4 py-6">
+                      <div className="flex h-12 w-12 items-center justify-center rounded-full bg-white text-lg font-semibold text-slate-700 shadow-soft">🌑</div>
                       <div className="text-left">
                         <div className="text-[11px] uppercase tracking-wide text-slate-600">Prochaine nouvelle lune</div>
                         <div className="text-base font-semibold text-slate-900">{formatDateLabel(moonNextPhases.nextNew)}</div>
