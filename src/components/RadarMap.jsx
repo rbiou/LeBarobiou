@@ -20,14 +20,31 @@ export default function RadarMap({ embedded = false } = {}) {
     const formatUnixTime = (unixSeconds) => formatTimeLabel(new Date(unixSeconds * 1000))
 
     useEffect(() => {
-        fetch('https://api.rainviewer.com/public/weather-maps.json')
-            .then(res => res.json())
-            .then(data => {
-                const pastFrames = data.radar?.past || []
-                setFrames(pastFrames)
+        const controller = new AbortController()
+        const loadFrames = async () => {
+            try {
+                const response = await fetch('https://tilecache.rainviewer.com/api/maps.json', {
+                    signal: controller.signal,
+                    cache: 'no-store',
+                })
+                if (!response.ok) throw new Error(`RainViewer maps.json ${response.status}`)
+                const data = await response.json()
+                const past = Array.isArray(data?.radar?.past) ? data.radar.past : []
+                const nowcast = Array.isArray(data?.radar?.nowcast) ? data.radar.nowcast : []
+                const combined = [...past, ...nowcast]
+                    .filter(frame => typeof frame?.time === 'number')
+                    .sort((a, b) => a.time - b.time)
+
+                setFrames(combined)
                 setCurrentFrameIndex(0)
-            })
-            .catch(console.error)
+            } catch (error) {
+                if (error.name !== 'AbortError') console.error('RainViewer fetch failed', error)
+                setFrames([])
+            }
+        }
+
+        loadFrames()
+        return () => controller.abort()
     }, [])
 
     useEffect(() => {
@@ -136,7 +153,7 @@ export default function RadarMap({ embedded = false } = {}) {
                 </Marker>
                 {frames.length > 0 && (
                     <TileLayer
-                        url={`https://tilecache.rainviewer.com/v2/radar/${frames[currentFrameIndex].time}/256/{z}/{x}/{y}/2/1_1.png`}
+                        url={`https://tilecache.rainviewer.com/v2/radar/${frames[currentFrameIndex].path ?? frames[currentFrameIndex].time}/256/{z}/{x}/{y}/2/1_1.png`}
                         opacity={0.7}
                         attribution="Radar: RainViewer"
                     />
