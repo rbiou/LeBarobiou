@@ -40,6 +40,5 @@ jobs:
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           publish_dir: ./dist
-          publish_branch: pages
           force_orphan: true     # 🔧 force un nouveau commit "propre" sur gh-pages
           commit_message: "Deploy Vite build 🚀"
