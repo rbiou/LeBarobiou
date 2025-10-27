@@ -224,6 +224,16 @@ export default function App() {
 
   const format1 = (n) => (n == null ? null : Number(n).toLocaleString('fr-FR', { minimumFractionDigits: 1, maximumFractionDigits: 1 }))
 
+  const formatDuration = (hours) => {
+    if (!Number.isFinite(hours) || hours <= 0) return '0 min'
+    const totalMinutes = Math.max(0, Math.round(hours * 60))
+    const h = Math.floor(totalMinutes / 60)
+    const m = totalMinutes % 60
+    if (h === 0) return `${totalMinutes} min`
+    if (m === 0) return `${h} h`
+    return `${h} h ${String(m).padStart(2, '0')} min`
+  }
+
   const metricTrends = useMemo(() => {
     const empty = {
       temp: { diff: null },
@@ -447,56 +457,75 @@ export default function App() {
   const displayPrecipRate = measuredRate != null ? measuredRate : fallbackRate
   const isRaining = ((Number(current?.precip1h) || 0) > 0) || ((Number(lastHourlyPoint?.precip) || 0) > 0)
   const eventDurationHours = precipAgg.eventHours || 0
-  const statusHeadline = isRaining ? 'Précipitations en cours' : 'Temps sec'
   const statusDescription = !hasHourlyData
     ? 'Données radar en cours de chargement.'
     : isRaining
       ? (eventDurationHours > 0.1
-        ? `Événement actif depuis ${format1(eventDurationHours)} h.`
+        ? `Événement actif depuis ${formatDuration(eventDurationHours)}.`
         : 'Pluie détectée sur les dernières observations.')
       : 'Aucune pluie observée récemment.'
   const lastRadarLabel = lastHourlyPoint?.ts
     ? new Date(lastHourlyPoint.ts).toLocaleString('fr-FR', { hour: '2-digit', minute: '2-digit' })
     : null
-  const eventInsightCards = isRaining ? [
-    {
-      key: 'duration',
-      label: "Durée de l'événement",
-      value: format1(eventDurationHours),
-      unit: 'h',
-      helper: 'Depuis la détection des premières gouttes',
-    },
-    {
-      key: 'event-total',
-      label: "Cumul de l'événement",
-      value: format1(precipAgg.eventSum),
-      unit: 'mm',
-      helper: 'Somme mesurée sur l’épisode',
-    },
-  ] : []
-  const rainTotals = [
-    {
-      key: 'today',
-      label: "Cumul aujourd'hui",
-      value: hasHourlyData ? format1(precipAgg.last24) : null,
-      unit: 'mm',
-      helper: 'Depuis 00h locale',
-    },
-    {
-      key: '7d',
-      label: 'Cumul 7 jours',
-      value: rain7d == null ? null : format1(rain7d),
-      unit: 'mm',
-      helper: 'Somme mobile sur 7 jours',
-    },
-    {
-      key: '30d',
-      label: 'Cumul 30 jours',
-      value: rain30d == null ? null : format1(rain30d),
-      unit: 'mm',
-      helper: 'Somme mobile sur 30 jours',
-    },
-  ]
+  const precipStatusCard = useMemo(() => {
+    const base = {
+      variant: isRaining ? 'wet' : 'dry',
+      title: isRaining ? 'PRÉCIPITATIONS EN COURS' : 'PRÉCIPITATIONS',
+      headline: isRaining ? 'Pluie en cours 🌧️' : 'Pas de pluie en cours',
+      description: statusDescription,
+      lastRadar: lastRadarLabel,
+      rateValue: displayPrecipRate != null ? format1(displayPrecipRate) : null,
+      rateUnit: displayPrecipRate != null ? 'mm/h' : null,
+      metrics: [],
+    }
+
+    if (!isRaining) return base
+
+    const durationLabel = formatDuration(eventDurationHours)
+    const eventTotal = format1(precipAgg.eventSum) ?? '0,0'
+
+    return {
+      ...base,
+      metrics: [
+        {
+          id: 'duration',
+          label: "Durée de l'événement",
+          value: durationLabel,
+          helper: 'Depuis la détection des premières gouttes',
+        },
+        {
+          id: 'total',
+          label: 'Cumul depuis le début',
+          value: eventTotal,
+          unit: 'mm',
+          helper: 'Accumulation sur cet épisode',
+        },
+      ],
+    }
+  }, [isRaining, statusDescription, lastRadarLabel, displayPrecipRate, eventDurationHours, precipAgg.eventSum])
+  const rainSummaryCards = useMemo(() => {
+    const todayValue = hasHourlyData ? format1(precipAgg.last24) : null
+    return [
+      {
+        key: 'today',
+        badge: "CUMUL AUJOURD'HUI",
+        value: todayValue,
+        helper: 'Somme observée depuis 00h locale.',
+      },
+      {
+        key: '7d',
+        badge: 'CUMUL 7 JOURS',
+        value: rain7d == null ? null : format1(rain7d),
+        helper: 'Accumulation totale sur les 7 derniers jours.',
+      },
+      {
+        key: '30d',
+        badge: 'CUMUL 30 JOURS',
+        value: rain30d == null ? null : format1(rain30d),
+        helper: 'Somme constatée sur les 30 derniers jours.',
+      },
+    ]
+  }, [hasHourlyData, precipAgg.last24, rain7d, rain30d])
 
   const chartData = useMemo(() => {
     if (chartRange === 'day') return hourly
@@ -599,20 +628,133 @@ export default function App() {
             </div>
 
             <div className="mt-4 flex flex-col gap-5">
-              <section className="rounded-2xl border border-slate-200 bg-white/80 px-4 py-4 shadow-sm sm:px-5 sm:py-5">
-                <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                  <div className="flex flex-col gap-1.5">
-                    <span className="text-xs uppercase tracking-wide text-slate-500">{statusHeadline}</span>
-                    <span className="text-sm leading-relaxed text-slate-600">{statusDescription}</span>
-                    {lastRadarLabel && (
-                      <span className="text-xs text-slate-400">Dernière mesure radar à {lastRadarLabel}</span>
+              <section className="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-4">
+                <div
+                  className={`relative overflow-hidden rounded-2xl border p-4 sm:p-5 ${
+                    precipStatusCard.variant === 'wet'
+                      ? 'border-sky-500/60 bg-gradient-to-br from-sky-600 via-blue-600 to-blue-700 text-white shadow-lg shadow-sky-500/30'
+                      : 'border-slate-200 bg-slate-100 text-slate-700 shadow-inner'
+                  }`}
+                >
+                  {precipStatusCard.variant === 'wet' && (
+                    <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(255,255,255,0.35),transparent)] opacity-70" />
+                  )}
+                  <div className="relative z-10 flex flex-col gap-3">
+                    <div className="flex items-start justify-between gap-3">
+                      <div>
+                        <span
+                          className={`text-[11px] uppercase tracking-wide ${
+                            precipStatusCard.variant === 'wet' ? 'text-white/70' : 'text-slate-500'
+                          }`}
+                        >
+                          {precipStatusCard.title}
+                        </span>
+                        <div className="mt-1 text-lg font-semibold leading-tight">
+                          {precipStatusCard.headline}
+                        </div>
+                      </div>
+                      {precipStatusCard.rateValue && (
+                        <div className="flex items-baseline gap-1 text-2xl font-semibold">
+                          <span>{precipStatusCard.rateValue}</span>
+                          {precipStatusCard.rateUnit && (
+                            <span className="text-xs font-medium opacity-80">{precipStatusCard.rateUnit}</span>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                    {precipStatusCard.description && (
+                      <p
+                        className={`text-sm leading-relaxed ${
+                          precipStatusCard.variant === 'wet' ? 'text-white/80' : 'text-slate-600'
+                        }`}
+                      >
+                        {precipStatusCard.description}
+                      </p>
+                    )}
+                    {precipStatusCard.metrics.length > 0 && (
+                      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                        {precipStatusCard.metrics.map((metric) => (
+                          <div
+                            key={metric.id}
+                            className={`rounded-xl border px-3 py-3 transition ${
+                              precipStatusCard.variant === 'wet'
+                                ? 'border-white/20 bg-white/10 text-white/90'
+                                : 'border-slate-200 bg-white/80 text-slate-700'
+                            }`}
+                          >
+                            <div
+                              className={`text-[11px] uppercase tracking-wide ${
+                                precipStatusCard.variant === 'wet' ? 'text-white/70' : 'text-slate-500'
+                              }`}
+                            >
+                              {metric.label}
+                            </div>
+                            <div className="mt-1 flex items-baseline gap-1 text-base font-semibold">
+                              <span>{metric.value}</span>
+                              {metric.unit && (
+                                <span
+                                  className={`text-xs font-medium ${
+                                    precipStatusCard.variant === 'wet' ? 'text-white/70' : 'text-slate-500'
+                                  }`}
+                                >
+                                  {metric.unit}
+                                </span>
+                              )}
+                            </div>
+                            {metric.helper && (
+                              <div
+                                className={`mt-1 text-[11px] ${
+                                  precipStatusCard.variant === 'wet' ? 'text-white/60' : 'text-slate-500'
+                                }`}
+                              >
+                                {metric.helper}
+                              </div>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                    {precipStatusCard.lastRadar && (
+                      <div
+                        className={`text-xs ${
+                          precipStatusCard.variant === 'wet' ? 'text-white/70' : 'text-slate-500'
+                        }`}
+                      >
+                        Dernière mesure radar à {precipStatusCard.lastRadar}
+                      </div>
                     )}
                   </div>
-                  <div className="flex items-baseline gap-1">
-                    <span className="text-4xl font-semibold text-slate-900">{displayPrecipRate != null ? format1(displayPrecipRate) : '—'}</span>
-                    {displayPrecipRate != null && <span className="text-sm text-slate-500">mm/h</span>}
-                  </div>
                 </div>
+                {rainSummaryCards.map(({ key, badge, value, helper }) => (
+                  <div
+                    key={key}
+                    className="rounded-2xl border border-slate-200 bg-white/80 p-4 shadow-sm min-h-[160px]"
+                  >
+                    <div className="flex h-full flex-col gap-4">
+                      <div className="flex items-center justify-between">
+                        <span className="inline-flex items-center rounded-full bg-slate-900 px-3 py-0.5 text-[11px] font-semibold uppercase tracking-wide text-white">
+                          {badge}
+                        </span>
+                        {key !== 'today' && rainLoading && (
+                          <span className="text-[10px] uppercase tracking-wide text-slate-400">Mise à jour…</span>
+                        )}
+                      </div>
+
+                      <div className="flex flex-col items-start gap-1 pt-2">
+                        <div className="flex items-baseline gap-1 text-3xl font-semibold text-slate-900">
+                          <span>{value ?? '—'}</span>
+                          {value != null && <span className="text-base font-medium text-slate-500">mm</span>}
+                        </div>
+                      </div>
+
+                      {helper && (
+                        <div className="mt-auto text-xs leading-snug text-slate-500">
+                          {helper}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                ))}
               </section>
 
               <section className="overflow-hidden rounded-2xl border border-slate-200 bg-white/80">
@@ -621,37 +763,6 @@ export default function App() {
                   <span className="text-slate-400">Source RainViewer</span>
                 </div>
                 <RadarMap embedded />
-              </section>
-
-              {isRaining && eventInsightCards.length > 0 && (
-                <section className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-                  {eventInsightCards.map(({ key, label, value, unit, helper }) => (
-                    <div key={key} className="rounded-xl border border-sky-200 bg-sky-50/90 p-3">
-                      <div className="text-xs uppercase tracking-wide text-sky-600">{label}</div>
-                      <div className="mt-1 flex items-baseline gap-1 text-xl font-semibold text-sky-900">
-                        <span>{value}</span>
-                        <span className="text-sm font-medium text-sky-600">{unit}</span>
-                      </div>
-                      <div className="mt-1 text-[11px] text-sky-600/80">{helper}</div>
-                    </div>
-                  ))}
-                </section>
-              )}
-
-              <section className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
-                {rainTotals.map(({ key, label, value, unit, helper }) => (
-                  <div key={key} className="rounded-xl border border-slate-200 bg-slate-50/80 p-3">
-                    <div className="text-xs uppercase tracking-wide text-slate-500">{label}</div>
-                    <div className="mt-1 flex items-baseline gap-1 text-xl font-semibold text-slate-900">
-                      <span>{value ?? '—'}</span>
-                      <span className="text-sm font-medium text-slate-500">{value == null ? '' : unit}</span>
-                    </div>
-                    <div className="mt-1 text-[11px] text-slate-500/80">
-                      {helper}
-                      {key !== 'today' && rainLoading && <span className="ml-1 text-slate-400">(maj…)</span>}
-                    </div>
-                  </div>
-                ))}
               </section>
             </div>
           </div>
