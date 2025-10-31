@@ -107,6 +107,19 @@ export default function WeatherChart({ data, range = 'day', onRangeChange, loadi
     return arr
   }, [data])
 
+  const rainDomain = useMemo(() => {
+    if (!prepared.length) return [0, 1]
+    const maxCum = prepared.reduce((acc, entry) => {
+      const value = Number(entry?.precipCum)
+      return Number.isFinite(value) && value > acc ? value : acc
+    }, 0)
+    const safeMax = Number.isFinite(maxCum) && maxCum > 0 ? maxCum : 0
+    const padding = safeMax < 5 ? 1 : safeMax * 0.15
+    const upperBound = safeMax + padding
+    const rounded = Math.ceil(upperBound * 10) / 10
+    return [0, Math.max(rounded, 1)]
+  }, [prepared])
+
   const ticks = useMemo(() => {
     if (!prepared.length) return []
     const min = prepared[0].timeMs
@@ -136,6 +149,9 @@ export default function WeatherChart({ data, range = 'day', onRangeChange, loadi
     : ['auto', 'auto']
 
   const showEmptyState = !loading && !prepared.length
+  const showHumidityAxis = visible.humidity
+  const showPressureAxis = visible.pressure
+  const showRainAxis = visible.precipAmount || visible.precipRate || visible.precipCum
 
   return (
     <div className="bg-card rounded-2xl shadow-soft p-4 sm:p-6">
@@ -192,9 +208,33 @@ export default function WeatherChart({ data, range = 'day', onRangeChange, loadi
               minTickGap={10}
             />
             <YAxis yAxisId="left" tick={{ fontSize: 12 }} domain={['auto', 'auto']} tickFormatter={oneDecimal} />
-            <YAxis yAxisId="right" orientation="right" tick={{ fontSize: 12 }} domain={[0, 100]} tickFormatter={oneDecimal} />
-            <YAxis yAxisId="pressure" orientation="right" tick={{ fontSize: 12 }} domain={['auto', 'auto']} tickFormatter={oneDecimal} hide={!visible.pressure} width={visible.pressure ? 48 : 0} />
-            <YAxis yAxisId="rain" orientation="right" hide domain={[0, 'auto']} tickFormatter={oneDecimal} />
+            <YAxis
+              yAxisId="right"
+              orientation="right"
+              tick={{ fontSize: 12 }}
+              domain={[0, 100]}
+              tickFormatter={oneDecimal}
+              hide={!showHumidityAxis}
+              width={showHumidityAxis ? 40 : 0}
+            />
+            <YAxis
+              yAxisId="pressure"
+              orientation="right"
+              tick={{ fontSize: 12 }}
+              domain={['auto', 'auto']}
+              tickFormatter={oneDecimal}
+              hide={!showPressureAxis}
+              width={showPressureAxis ? 48 : 0}
+            />
+            <YAxis
+              yAxisId="rain"
+              orientation="right"
+              tick={{ fontSize: 12 }}
+              domain={rainDomain}
+              tickFormatter={oneDecimal}
+              hide={!showRainAxis}
+              width={showRainAxis ? 48 : 0}
+            />
             <Tooltip
               labelFormatter={(v) => new Date(v).toLocaleString('fr-FR', { hour: '2-digit', minute: '2-digit', weekday: 'short' })}
               formatter={(value, name, props) => {
