@@ -2,8 +2,53 @@
 @tailwind components;
 @tailwind utilities;
 
+@layer base {
+  :root {
+    --bg-main: 248 250 252; /* slate-50 */
+    --bg-card: 255 255 255; /* white */
+    --bg-card-alt: 241 245 249; /* slate-100 */
+    
+    --text-main: 15 23 42; /* slate-900 */
+    --text-secondary: 71 85 105; /* slate-600 */
+    --text-muted: 148 163 184; /* slate-400 */
+    
+    --border-soft: 226 232 240; /* slate-200 */
+    
+    --primary: 14 165 233; /* sky-500 */
+    --primary-foreground: 255 255 255;
+    
+    --accent-sky: 14 165 233;
+    --accent-blue: 37 99 235;
+    --accent-amber: 245 158 11;
+    --accent-rose: 244 63 94;
+    --accent-indigo: 99 102 241;
+  }
+
+  .dark {
+    --bg-main: 15 23 42; /* slate-900 */
+    --bg-card: 30 41 59; /* slate-800 */
+    --bg-card-alt: 51 65 85; /* slate-700 */
+    
+    --text-main: 248 250 252; /* slate-50 */
+    --text-secondary: 203 213 225; /* slate-300 */
+    --text-muted: 148 163 184; /* slate-400 */
+    
+    --border-soft: 51 65 85; /* slate-700 */
+    
+    --primary: 56 189 248; /* sky-400 */
+    --primary-foreground: 15 23 42;
+
+    /* Neon Accents for Dark Mode */
+    --accent-sky: 56 189 248;
+    --accent-blue: 96 165 250;
+    --accent-amber: 251 191 36;
+    --accent-rose: 251 113 133;
+    --accent-indigo: 129 140 248;
+  }
+}
+
 :root {
-  color-scheme: light;
+  color-scheme: light dark;
 }
 
 html, body, #root {

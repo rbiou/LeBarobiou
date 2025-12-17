@@ -1,11 +1,21 @@
 import React, { useEffect, useState, useRef } from 'react'
 import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet'
+import { useTheme } from '../context/ThemeContext'
+import { HiPlay, HiPause, HiBolt } from 'react-icons/hi2'
+import SwipeableTabs from './ui/SwipeableTabs'
+
+const SPEED_OPTIONS = [
+    { label: 'Lent', value: 600 },
+    { label: 'Normal', value: 400 },
+    { label: 'Rapide', value: 200 },
+]
 
 export default function RadarMap({ embedded = false } = {}) {
+    const { isDark } = useTheme()
     const [frames, setFrames] = useState([])
     const [currentFrameIndex, setCurrentFrameIndex] = useState(0)
     const [isPlaying, setIsPlaying] = useState(true)
-    const [speed, setSpeed] = useState(400)
+    const [speed, setSpeed] = useState(400) // Default Normal
     const [showLightning, setShowLightning] = useState(true)
     const timelineRef = useRef(null)
     const intervalRef = useRef(null)
@@ -131,13 +141,11 @@ export default function RadarMap({ embedded = false } = {}) {
     const currentFrameTime = hasFrames ? new Date(frames[currentFrameIndex].time * 1000) : null
     const formattedTime = currentFrameTime ? formatTimeLabel(currentFrameTime) : ''
 
-    // Decide which ticks to show to avoid clutter
     const maxTickCount = 6
     const tickStep = frames.length > maxTickCount ? Math.ceil(frames.length / maxTickCount) : 1
 
     const handleKeyDown = (event) => {
         if (!hasFrames) return
-
         if (event.key === 'ArrowRight' || event.key === 'ArrowUp') {
             event.preventDefault()
             setCurrentFrameIndex(prev => Math.min(prev + 1, maxFrameIndex))
@@ -159,51 +167,55 @@ export default function RadarMap({ embedded = false } = {}) {
 
     const wrapperClasses = embedded
         ? 'flex flex-col gap-4'
-        : 'rounded-2xl overflow-hidden shadow-soft border border-slate-200 p-2'
+        : 'rounded-2xl overflow-hidden shadow-soft border border-border bg-card p-2'
 
-    const timelineContainerSpacing = embedded ? 'mt-3' : 'mt-4'
-    const timelinePadding = embedded ? 'px-3 py-5 sm:px-4' : 'px-4 py-7 sm:px-5'
-    const timelineOuterLayout = embedded
-        ? 'flex flex-col items-center gap-3 px-2 sm:px-3'
-        : 'flex flex-col items-center gap-3'
-    const timelineInnerWidth = 'w-full'
-    const controlsWidth = embedded ? 'max-w-xl w-full' : 'max-w-2xl w-full'
     const mapHeight = embedded ? 'min(60vh, 360px)' : '400px'
     const lightningTileUrl = 'https://tilecache.rainviewer.com/v2/lightning/latest/256/{z}/{x}/{y}.png'
 
+    // Stadia Maps - Alidade Smooth & Dark
+    const tileUrl = isDark
+        ? 'https://tiles.stadiamaps.com/tiles/alidade_smooth_dark/{z}/{x}/{y}{r}.png'
+        : 'https://tiles.stadiamaps.com/tiles/alidade_smooth/{z}/{x}/{y}{r}.png'
+
+    const attribution = '&copy; <a href="https://stadiamaps.com/">Stadia Maps</a>, &copy; <a href="https://openmaptiles.org/">OpenMapTiles</a> &copy; <a href="http://openstreetmap.org">OpenStreetMap</a> contributors'
+
     return (
         <div className={wrapperClasses}>
-            <MapContainer center={centerAigre} zoom={8} style={{ height: mapHeight, width: '100%' }} className="relative z-0">
-                <TileLayer
-                    url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-                    attribution="© OpenStreetMap contributors"
-                />
-                <Marker position={centerAigre}>
-                    <Popup>Aigre (16140, France)</Popup>
-                </Marker>
-                {frames.length > 0 && (
+            <div className="relative z-0 overflow-hidden rounded-xl bg-slate-100 dark:bg-slate-900" style={{ height: mapHeight, width: '100%' }}>
+                <MapContainer center={centerAigre} zoom={8} style={{ height: '100%', width: '100%' }}>
                     <TileLayer
-                        key={`radar-${frames[currentFrameIndex].time}`}
-                        url={frames[currentFrameIndex].url}
-                        opacity={0.7}
-                        attribution="Radar: RainViewer"
+                        url={tileUrl}
+                        attribution={attribution}
                     />
-                )}
-                {showLightning && (
-                    <TileLayer
-                        key="lightning-overlay"
-                        url={lightningTileUrl}
-                        opacity={0.8}
-                        attribution="Lightning: RainViewer"
-                    />
-                )}
-            </MapContainer>
+                    <Marker position={centerAigre}>
+                        <Popup>Aigre (16140, France)</Popup>
+                    </Marker>
+                    {frames.length > 0 && (
+                        <TileLayer
+                            key={`radar-${frames[currentFrameIndex].time}`}
+                            url={frames[currentFrameIndex].url}
+                            opacity={0.7}
+                            attribution="Radar: RainViewer"
+                        />
+                    )}
+                    {showLightning && (
+                        <TileLayer
+                            key="lightning-overlay"
+                            url={lightningTileUrl}
+                            opacity={0.8}
+                            attribution="Lightning: RainViewer"
+                        />
+                    )}
+                </MapContainer>
+            </div>
 
-            {/* Timeline */}
-            <div className={`${timelineContainerSpacing} ${timelineOuterLayout}`}>
+            {/* Controls */}
+            <div className="flex flex-col gap-4 px-2 pb-2 mt-4">
+
+                {/* Timeline */}
                 <div
                     ref={timelineRef}
-                    className={`relative ${timelineInnerWidth} select-none touch-pan-x ${timelinePadding} focus-visible:outline focus-visible:outline-2 focus-visible:outline-blue-500 ${hasFrames ? 'cursor-pointer' : 'pointer-events-none opacity-60'}`}
+                    className={`relative w-full h-8 select-none touch-pan-x flex items-center focus-visible:outline focus-visible:outline-2 focus-visible:outline-primary ${hasFrames ? 'cursor-pointer' : 'pointer-events-none opacity-60'}`}
                     onMouseDown={handleDrag}
                     onMouseMove={(e) => e.buttons === 1 && handleDrag(e)}
                     onTouchStart={handleTouchStart}
@@ -211,115 +223,82 @@ export default function RadarMap({ embedded = false } = {}) {
                     onTouchEnd={handleTouchEnd}
                     onTouchCancel={handleTouchEnd}
                     role="slider"
-                    aria-label="Timeline des observations radar"
-                    aria-valuemin={0}
-                    aria-valuemax={maxFrameIndex}
-                    aria-valuenow={hasFrames ? currentFrameIndex : 0}
-                    aria-valuetext={formattedTime || 'Chargement des observations'}
                     tabIndex={hasFrames ? 0 : -1}
                     onKeyDown={handleKeyDown}
                 >
-                    <div className="absolute left-0 right-0 top-6">
-                        <div className="relative h-2 rounded-full bg-slate-200">
-                            <div
-                                className="absolute left-0 top-0 h-full rounded-full bg-blue-500 transition-all duration-150 ease-out"
-                                style={{ width: `${progressPercent}%` }}
-                            />
-
-                            {/* Timeline ticks & labels */}
-                            {frames.map((frame, idx) => {
-                                if (!hasFrames) return null
-                                const isEdgeTick = idx === 0 || idx === maxFrameIndex
-                                if (!isEdgeTick && idx % tickStep !== 0) return null
-                                const leftPercent = hasFrames ? (idx / timelineRange) * 100 : 0
-                                const labelAlignment = idx === 0
-                                    ? 'translate-x-0'
-                                    : idx === maxFrameIndex
-                                        ? '-translate-x-full'
-                                        : '-translate-x-1/2'
-                                const label = formatUnixTime(frame.time)
-                                return (
-                                    <React.Fragment key={frame.time}>
-                                        <div
-                                            className="absolute top-1/2 h-4 w-px -translate-y-1/2 bg-slate-400"
-                                            style={{ left: `${leftPercent}%` }}
-                                        />
-                                        <div
-                                            className={`absolute top-full mt-2 whitespace-nowrap text-[10px] text-slate-600 sm:text-xs ${labelAlignment} ${isEdgeTick ? 'block' : 'hidden sm:block'}`}
-                                            style={{ left: `${leftPercent}%` }}
-                                        >
-                                            {label}
-                                        </div>
-                                    </React.Fragment>
-                                )
-                            })}
-
-                            {/* Draggable handle */}
-                            <div
-                                className="absolute top-1/2 h-6 w-6 -translate-x-1/2 -translate-y-1/2 cursor-grab rounded-full border-2 border-white bg-blue-600 shadow-sm transition-transform duration-150 ease-out active:cursor-grabbing"
-                                style={{ left: `${progressPercent}%` }}
-                            />
-                        </div>
+                    {/* Track */}
+                    <div className="w-full h-1.5 rounded-full bg-slate-200 dark:bg-slate-700 relative">
+                        {/* Progress */}
+                        <div
+                            className="absolute left-0 top-0 h-full rounded-full bg-primary transition-all duration-150 ease-out"
+                            style={{ width: `${progressPercent}%` }}
+                        />
+                        {/* Draggable handle */}
+                        <div
+                            className="absolute top-1/2 h-4 w-4 -translate-x-1/2 -translate-y-1/2 bg-white dark:bg-slate-800 border-2 border-primary rounded-full shadow-sm active:scale-110 transition-transform"
+                            style={{ left: `${progressPercent}%` }}
+                        />
                     </div>
 
-                    {/* Floating timestamp */}
-                    {formattedTime && (
-                        <div
-                            className="absolute left-0 right-0"
-                            style={{ top: '-0.25rem' }}
-                        >
+                    {/* Ticks */}
+                    {frames.map((frame, idx) => {
+                        if (!hasFrames) return null
+                        const isEdgeTick = idx === 0 || idx === maxFrameIndex
+                        if (!isEdgeTick && idx % tickStep !== 0) return null
+                        const leftPercent = hasFrames ? (idx / timelineRange) * 100 : 0
+                        return (
                             <div
-                                className={`absolute whitespace-nowrap rounded-full bg-white px-3 py-1 text-xs font-medium text-slate-800 shadow-sm ${
-                                    progressPercent < 5
-                                        ? 'translate-x-0'
-                                        : progressPercent > 95
-                                            ? '-translate-x-full'
-                                            : '-translate-x-1/2'
-                                }`}
-                                style={{ left: `${progressPercent}%` }}
+                                key={frame.time}
+                                className={`absolute top-6 text-[10px] text-text-muted transform -translate-x-1/2 ${isEdgeTick ? 'block' : 'hidden sm:block'}`}
+                                style={{ left: `${leftPercent}%` }}
                             >
-                                {formattedTime}
+                                {formatUnixTime(frame.time)}
                             </div>
-                        </div>
-                    )}
+                        )
+                    })}
                 </div>
 
                 {!hasFrames && (
-                    <div className={`${timelineInnerWidth} text-center text-sm text-slate-500`}>
+                    <div className="text-center text-xs text-text-muted mt-2">
                         Chargement des observations radar…
                     </div>
                 )}
 
-                <div className={`${controlsWidth} flex flex-col items-center gap-3 rounded-xl bg-white/80 px-4 py-3 shadow-sm sm:flex-row sm:items-center sm:justify-center sm:gap-6`}>
-                    <div className="flex w-full flex-col items-stretch gap-2 sm:w-auto sm:flex-row sm:items-center sm:justify-center sm:gap-3">
-                        <button
-                            className="h-10 rounded-lg bg-blue-500 px-4 text-sm font-medium text-white shadow-sm transition focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-500 active:translate-y-px sm:min-w-[96px]"
-                            onClick={() => setIsPlaying(!isPlaying)}
-                        >
-                            {isPlaying ? 'Pause' : 'Play'}
-                        </button>
+                {/* Control Action Bar */}
+                <div className="flex items-center justify-between gap-4 mt-2">
+                    {/* Play/Pause Button */}
+                    <button
+                        className="flex-none h-11 w-11 flex items-center justify-center rounded-full bg-primary text-white shadow-md hover:bg-primary/90 transition-transform active:scale-95"
+                        onClick={() => setIsPlaying(!isPlaying)}
+                        aria-label={isPlaying ? "Pause" : "Play"}
+                    >
+                        {isPlaying ? <HiPause className="text-xl" /> : <HiPlay className="text-xl ml-0.5" />}
+                    </button>
 
-                        <button
-                            className={`h-10 rounded-lg px-4 text-sm font-medium shadow-sm transition focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-500 active:translate-y-px ${showLightning ? 'bg-yellow-400 text-black' : 'bg-slate-300 text-slate-700'}`}
-                            onClick={() => setShowLightning(!showLightning)}
-                        >
-                            ⚡
-                        </button>
-                    </div>
-
-                    <div className="flex w-full flex-col items-stretch gap-1 text-sm sm:w-auto sm:flex-row sm:items-center sm:gap-2">
-                        <label className="text-sm font-medium text-slate-700 sm:whitespace-nowrap">Vitesse</label>
-                        <select
-                            className="h-10 rounded-lg border border-slate-300 bg-white px-3 text-sm font-medium text-slate-700 shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    {/* Swipeable Speed Selector */}
+                    <div className="flex-1 max-w-[280px]">
+                        <SwipeableTabs
+                            options={SPEED_OPTIONS}
                             value={speed}
-                            onChange={(e) => setSpeed(Number(e.target.value))}
-                        >
-                            <option value={100}>Rapide</option>
-                            <option value={200}>Normal</option>
-                            <option value={400}>Lent</option>
-                            <option value={600}>Très lent</option>
-                        </select>
+                            onChange={setSpeed}
+                            className="h-10 rounded-full border border-border bg-card shadow-sm p-1"
+                            itemClassName="rounded-full text-[11px] font-medium"
+                            activeItemClassName="text-primary font-bold dark:text-white"
+                            inactiveItemClassName="text-text-muted hover:text-text-secondary"
+                            indicatorClassName="rounded-full bg-primary/10 dark:bg-primary/20 border border-primary/50 top-1 bottom-1 left-1"
+                        />
                     </div>
+
+
+                    {/* Lightning Toggle */}
+                    <button
+                        className={`flex flex-none items-center justify-center h-10 px-3 rounded-full border transition-colors gap-2 ${showLightning ? 'bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400 border-amber-200 dark:border-amber-800' : 'bg-card border-border text-text-muted hover:text-text hover:bg-card-alt'}`}
+                        onClick={() => setShowLightning(!showLightning)}
+                        title="Afficher/Masquer les éclairs"
+                    >
+                        <HiBolt className={`text-lg ${showLightning ? 'fill-current' : ''}`} />
+                        <span className="hidden sm:inline text-xs font-semibold">Éclairs</span>
+                    </button>
                 </div>
             </div>
         </div>

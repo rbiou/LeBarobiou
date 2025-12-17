@@ -38,12 +38,12 @@ export default function WeatherCard({
   const formattedTrend = hasTrend ? formatOneDecimal(Math.abs(trendDiff)) : null
   const trendSign = hasTrend ? (trendDiff > 0 ? '+' : trendDiff < 0 ? '-' : '') : ''
   const trendTone = trendDiff == null
-    ? 'bg-slate-100 text-slate-600'
+    ? 'bg-card-alt text-text-secondary'
     : trendDiff > 0
-      ? 'bg-emerald-50 text-emerald-700'
+      ? 'bg-emerald-50 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-400'
       : trendDiff < 0
-        ? 'bg-rose-50 text-rose-700'
-        : 'bg-slate-100 text-slate-600'
+        ? 'bg-rose-50 dark:bg-rose-900/20 text-rose-700 dark:text-rose-400'
+        : 'bg-card-alt text-text-secondary'
   const minFormatted = formatOneDecimal(minValue)
   const maxFormatted = formatOneDecimal(maxValue)
   const formatTime = (time) => {
@@ -65,15 +65,15 @@ export default function WeatherCard({
             <Icon />
           </div>
           <div>
-            <div className="text-xs uppercase tracking-wide text-slate-500">{title}</div>
-            <div className="text-3xl font-semibold tracking-tight">
+            <div className="text-xs uppercase tracking-wide text-text-muted">{title}</div>
+            <div className="text-3xl font-semibold tracking-tight text-text">
               {formatted !== null ? (
                 <span>
                   {formatted}
-                  {unit ? <span className="ml-1 text-lg font-medium text-slate-500">{unit}</span> : null}
+                  {unit ? <span className="ml-1 text-lg font-medium text-text-muted">{unit}</span> : null}
                 </span>
               ) : (
-                <span className="text-slate-400">—</span>
+                <span className="text-text-muted">—</span>
               )}
             </div>
           </div>
@@ -92,36 +92,36 @@ export default function WeatherCard({
       </div>
 
       <div className="grid grid-cols-2 gap-2 text-sm">
-        <div className="rounded-xl border border-slate-200 bg-white/70 px-3 py-2">
-          <div className="text-[11px] uppercase tracking-wide text-slate-500">Min jour</div>
-          <div className="mt-1 text-base font-semibold text-slate-900">
+        <div className="rounded-xl border border-border bg-card-alt px-3 py-2">
+          <div className="text-[11px] uppercase tracking-wide text-text-muted">Min jour</div>
+          <div className="mt-1 text-base font-semibold text-text">
             {minFormatted !== null ? (
               <span>
                 {minFormatted}
-                {unit ? <span className="ml-1 text-xs font-medium text-slate-500">{unit}</span> : null}
+                {unit ? <span className="ml-1 text-xs font-medium text-text-muted">{unit}</span> : null}
               </span>
             ) : (
-              <span className="text-slate-400">—</span>
+              <span className="text-text-muted">—</span>
             )}
           </div>
           {minTimeFormatted && (
-            <div className="mt-0.5 text-[11px] text-slate-500">à {minTimeFormatted}</div>
+            <div className="mt-0.5 text-[11px] text-text-muted">à {minTimeFormatted}</div>
           )}
         </div>
-        <div className="rounded-xl border border-slate-200 bg-white/70 px-3 py-2">
-          <div className="text-[11px] uppercase tracking-wide text-slate-500">Max jour</div>
-          <div className="mt-1 text-base font-semibold text-slate-900">
+        <div className="rounded-xl border border-border bg-card-alt px-3 py-2">
+          <div className="text-[11px] uppercase tracking-wide text-text-muted">Max jour</div>
+          <div className="mt-1 text-base font-semibold text-text">
             {maxFormatted !== null ? (
               <span>
                 {maxFormatted}
-                {unit ? <span className="ml-1 text-xs font-medium text-slate-500">{unit}</span> : null}
+                {unit ? <span className="ml-1 text-xs font-medium text-text-muted">{unit}</span> : null}
               </span>
             ) : (
-              <span className="text-slate-400">—</span>
+              <span className="text-text-muted">—</span>
             )}
           </div>
           {maxTimeFormatted && (
-            <div className="mt-0.5 text-[11px] text-slate-500">à {maxTimeFormatted}</div>
+            <div className="mt-0.5 text-[11px] text-text-muted">à {maxTimeFormatted}</div>
           )}
         </div>
       </div>
