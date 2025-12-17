@@ -215,7 +215,7 @@ export default function RadarMap({ embedded = false } = {}) {
                 {/* Timeline */}
                 <div
                     ref={timelineRef}
-                    className={`relative w-full h-8 select-none touch-pan-x flex items-center focus-visible:outline focus-visible:outline-2 focus-visible:outline-primary ${hasFrames ? 'cursor-pointer' : 'pointer-events-none opacity-60'}`}
+                    className={`relative w-full h-12 select-none touch-pan-x flex items-center focus-visible:outline focus-visible:outline-2 focus-visible:outline-primary ${hasFrames ? 'cursor-pointer' : 'pointer-events-none opacity-60'}`}
                     onMouseDown={handleDrag}
                     onMouseMove={(e) => e.buttons === 1 && handleDrag(e)}
                     onTouchStart={handleTouchStart}
@@ -227,35 +227,37 @@ export default function RadarMap({ embedded = false } = {}) {
                     onKeyDown={handleKeyDown}
                 >
                     {/* Track */}
-                    <div className="w-full h-1.5 rounded-full bg-slate-200 dark:bg-slate-700 relative">
+                    <div className="w-full h-1.5 rounded-full bg-slate-200 dark:bg-slate-700 relative mx-2">
                         {/* Progress */}
                         <div
                             className="absolute left-0 top-0 h-full rounded-full bg-primary transition-all duration-150 ease-out"
                             style={{ width: `${progressPercent}%` }}
                         />
-                        {/* Draggable handle */}
+                        {/* Draggable handle with time label */}
                         <div
-                            className="absolute top-1/2 h-4 w-4 -translate-x-1/2 -translate-y-1/2 bg-white dark:bg-slate-800 border-2 border-primary rounded-full shadow-sm active:scale-110 transition-transform"
-                            style={{ left: `${progressPercent}%` }}
-                        />
+                            className="absolute top-1/2 -translate-y-1/2 flex flex-col items-center pointer-events-none"
+                            style={{ left: `${progressPercent}%`, transform: `translateX(-50%) translateY(-50%)` }}
+                        >
+                            {/* Time label above handle */}
+                            <div className="absolute -top-6 bg-primary text-white text-[10px] font-medium px-1.5 py-0.5 rounded whitespace-nowrap shadow-sm">
+                                {formattedTime}
+                            </div>
+                            {/* Handle */}
+                            <div className="h-4 w-4 bg-white dark:bg-slate-800 border-2 border-primary rounded-full shadow-sm" />
+                        </div>
                     </div>
 
-                    {/* Ticks */}
-                    {frames.map((frame, idx) => {
-                        if (!hasFrames) return null
-                        const isEdgeTick = idx === 0 || idx === maxFrameIndex
-                        if (!isEdgeTick && idx % tickStep !== 0) return null
-                        const leftPercent = hasFrames ? (idx / timelineRange) * 100 : 0
-                        return (
-                            <div
-                                key={frame.time}
-                                className={`absolute top-6 text-[10px] text-text-muted transform -translate-x-1/2 ${isEdgeTick ? 'block' : 'hidden sm:block'}`}
-                                style={{ left: `${leftPercent}%` }}
-                            >
-                                {formatUnixTime(frame.time)}
+                    {/* Edge time labels - positioned at edges with proper alignment */}
+                    {hasFrames && (
+                        <>
+                            <div className="absolute left-2 bottom-0 text-[10px] text-text-muted">
+                                {formatUnixTime(frames[0].time)}
                             </div>
-                        )
-                    })}
+                            <div className="absolute right-2 bottom-0 text-[10px] text-text-muted">
+                                {formatUnixTime(frames[maxFrameIndex].time)}
+                            </div>
+                        </>
+                    )}
                 </div>
 
                 {!hasFrames && (
@@ -265,14 +267,14 @@ export default function RadarMap({ embedded = false } = {}) {
                 )}
 
                 {/* Control Action Bar */}
-                <div className="flex items-center justify-between gap-4 mt-2">
+                <div className="flex items-center justify-between gap-3 mt-2">
                     {/* Play/Pause Button */}
                     <button
-                        className="flex-none h-11 w-11 flex items-center justify-center rounded-full bg-primary text-white shadow-md hover:bg-primary/90 transition-transform active:scale-95"
+                        className={`flex-none h-10 w-10 flex items-center justify-center rounded-full border transition-all active:scale-95 ${isPlaying ? 'bg-primary/10 dark:bg-primary/20 border-primary/50 text-primary' : 'bg-card border-border text-text-muted hover:text-text hover:bg-card-alt'}`}
                         onClick={() => setIsPlaying(!isPlaying)}
                         aria-label={isPlaying ? "Pause" : "Play"}
                     >
-                        {isPlaying ? <HiPause className="text-xl" /> : <HiPlay className="text-xl ml-0.5" />}
+                        {isPlaying ? <HiPause className="text-lg" /> : <HiPlay className="text-lg ml-0.5" />}
                     </button>
 
                     {/* Swipeable Speed Selector */}
@@ -292,12 +294,12 @@ export default function RadarMap({ embedded = false } = {}) {
 
                     {/* Lightning Toggle */}
                     <button
-                        className={`flex flex-none items-center justify-center h-10 px-3 rounded-full border transition-colors gap-2 ${showLightning ? 'bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400 border-amber-200 dark:border-amber-800' : 'bg-card border-border text-text-muted hover:text-text hover:bg-card-alt'}`}
+                        className={`flex flex-none items-center justify-center h-10 w-10 sm:w-auto sm:px-3 rounded-full border transition-all active:scale-95 gap-2 ${showLightning ? 'bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400 border-amber-300 dark:border-amber-700' : 'bg-card border-border text-text-muted hover:text-text hover:bg-card-alt'}`}
                         onClick={() => setShowLightning(!showLightning)}
                         title="Afficher/Masquer les éclairs"
                     >
                         <HiBolt className={`text-lg ${showLightning ? 'fill-current' : ''}`} />
-                        <span className="hidden sm:inline text-xs font-semibold">Éclairs</span>
+                        <span className="hidden sm:inline text-xs font-medium">Éclairs</span>
                     </button>
                 </div>
             </div>

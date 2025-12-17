@@ -227,8 +227,6 @@ export default function WeatherChart({ data, range = 'day', onRangeChange, loadi
   const legendItems = [
     { key: 'temperature', label: 'Température (°C)', color: colors.temp, type: 'line' },
     { key: 'precipCum', label: 'Cumul pluie (mm)', color: colors.precipCum, type: 'line' },
-    { key: 'precipAmount', label: 'Total intervalle (mm)', color: colors.precipAmount, type: 'bar' },
-    { key: 'precipRate', label: 'Intensité (mm)', color: colors.precipRate, type: 'bar' },
     { key: 'humidity', label: 'Humidité (%)', color: colors.humidity, type: 'line' },
     { key: 'pressure', label: 'Pression (hPa)', color: colors.pressure, type: 'line' },
     { key: 'temperatureMin', label: 'Temp min (°C)', color: colors.tempMin, type: 'line', dash: '4 4' },
@@ -278,7 +276,7 @@ export default function WeatherChart({ data, range = 'day', onRangeChange, loadi
       {!loading && !showEmptyState && (
         <>
           {/* Custom HTML Legend - Outside of SVG */}
-          <div className="flex flex-wrap items-center justify-center gap-3 px-2 pb-4 pt-2 text-xs sm:text-sm border-b border-border/50 mb-0">
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2 px-1 pb-4 pt-2 border-b border-border/50 mb-0">
             {legendItems.map((entry) => {
               const active = visible[entry.key] !== false
               return (
@@ -286,17 +284,21 @@ export default function WeatherChart({ data, range = 'day', onRangeChange, loadi
                   key={entry.key}
                   type="button"
                   onClick={() => handleLegendClick(entry.key)}
-                  className={`flex items-center gap-1.5 transition-opacity ${active ? 'opacity-100' : 'opacity-40 grayscale'}`}
+                  className={`flex items-center gap-2 px-2.5 py-2 rounded-lg transition-all touch-manipulation ${active ? 'opacity-100 bg-card-alt/50 shadow-sm border border-border/50' : 'opacity-50 grayscale hover:opacity-70'
+                    }`}
+                  aria-pressed={active}
                 >
                   <span
-                    className="inline-block h-2.5 w-2.5 rounded-full"
+                    className="inline-block w-2.5 h-2.5 rounded-full shrink-0"
                     style={{
                       backgroundColor: entry.color,
                       border: entry.type === 'line' ? `1px solid ${entry.color}` : 'none',
                       opacity: entry.type === 'line' && entry.dash ? 0.7 : 1,
                     }}
                   />
-                  <span className={`transition-all ${active ? 'font-medium text-text' : 'font-normal text-text-muted line-through'}`}>{entry.label}</span>
+                  <span className={`text-xs font-medium whitespace-nowrap ${active ? 'text-text' : 'text-text-muted line-through decoration-text-muted/50'}`}>
+                    {entry.label}
+                  </span>
                 </button>
               )
             })}

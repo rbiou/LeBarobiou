@@ -350,25 +350,32 @@ function AppContent() {
     const minutes = Math.round((totalHours - hours) * 60)
     const lengthLabel = isFinite(totalHours) ? `${hours}h${String(minutes).padStart(2, '0')}` : '—'
 
-    const twoHoursMs = 2 * 60 * 60 * 1000
+    // Get current hour in Paris timezone for proper label
+    const parisHour = parseInt(now.toLocaleTimeString('fr-FR', { hour: '2-digit', hour12: false, timeZone: 'Europe/Paris' }), 10)
+
     let label = 'Nuit'
     let tone = 'bg-card-alt text-text-secondary border border-border'
 
     if (now < sunrise) {
+      // Before sunrise
       label = 'Avant lever'
-      tone = 'bg-card-alt text-text-secondary border border-border'
+      tone = 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 border border-slate-200 dark:border-slate-700'
     } else if (now >= sunset) {
+      // After sunset
       label = 'Nuit'
-      tone = 'bg-card-alt text-text-secondary border border-border'
-    } else if (now.getTime() - sunrise.getTime() <= twoHoursMs) {
-      label = 'Matinée'
+      tone = 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 border border-slate-200 dark:border-slate-700'
+    } else if (parisHour < 12) {
+      // Morning (before noon)
+      label = 'Matin'
       tone = 'bg-sky-100 dark:bg-sky-900/30 text-sky-700 dark:text-sky-300 border border-sky-200 dark:border-sky-800'
-    } else if (sunset.getTime() - now.getTime() <= twoHoursMs) {
-      label = 'Crépuscule'
-      tone = 'bg-rose-100 dark:bg-rose-900/30 text-rose-700 dark:text-rose-300 border border-rose-200 dark:border-rose-800'
-    } else {
+    } else if (parisHour < 17) {
+      // Afternoon (12h - 17h)
       label = 'Après-midi'
       tone = 'bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300 border border-amber-200 dark:border-amber-800'
+    } else {
+      // Evening (17h until sunset)
+      label = 'Soir'
+      tone = 'bg-rose-100 dark:bg-rose-900/30 text-rose-700 dark:text-rose-300 border border-rose-200 dark:border-rose-800'
     }
 
     return { progressPct: Math.min(Math.max(progressPct, 0), 100), label, tone, lengthLabel }
@@ -520,8 +527,8 @@ function AppContent() {
 
   return (
     <div className="min-h-screen bg-bg text-text transition-colors duration-300">
-      <header className="relative z-10">
-        <div className="mx-auto container-max px-4 pt-6">
+      <header className="relative z-10 pt-4 sm:pt-6">
+        <div className="mx-auto container-max px-4">
           <div className="relative overflow-hidden rounded-3xl border border-white/10 bg-slate-900/80 shadow-soft">
             <img
               src={heroCover}
@@ -529,28 +536,34 @@ function AppContent() {
               className="absolute inset-0 h-full w-full object-cover opacity-90"
               loading="lazy"
             />
-            <div className="absolute inset-0 bg-gradient-to-br from-slate-950/80 via-slate-950/30 to-slate-900/10" />
-            <div className="relative px-6 py-12 text-white sm:px-10">
-              <h1 className="text-2xl font-semibold sm:text-3xl">Le Barobiou</h1>
+            <div className="absolute inset-0 bg-gradient-to-r from-slate-900/50 via-slate-900/10 to-transparent" />
+
+            <div className="relative px-6 py-8 sm:px-10 sm:py-12 flex items-center justify-between">
+              <div>
+                <h1 className="text-2xl font-semibold text-white sm:text-3xl">Le Barobiou</h1>
+                <div className="mt-1 flex items-center gap-2 text-xs font-medium text-white/60">
+                  <span>{formatDateTime(lastUpdate)}</span>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-3">
+                {canInstall && (
+                  <button
+                    onClick={promptInstall}
+                    className="hidden sm:block rounded-full bg-white/20 px-4 py-1.5 text-xs font-medium text-white backdrop-blur-md transition hover:bg-white/30"
+                  >
+                    Installer
+                  </button>
+                )}
+              </div>
             </div>
-            {canInstall && (
-              <button
-                onClick={promptInstall}
-                className="absolute top-4 right-4 rounded-full bg-white/20 px-4 py-1.5 text-xs font-medium text-white backdrop-blur-md transition hover:bg-white/30"
-              >
-                Installer l'app
-              </button>
-            )}
           </div>
         </div>
       </header>
 
       <PullToRefresh onRefresh={refresh} isRefreshing={loading}>
-        <main className="mx-auto container-max px-4 py-6 sm:py-8">
-          <div className="flex items-center justify-between mb-4">
-            <div className="text-text-muted text-sm">Dernière mise à jour: {formatDateTime(lastUpdate)}</div>
-            <button onClick={refresh} className="text-primary text-sm font-medium hover:text-primary/80 transition-colors">Actualiser</button>
-          </div>
+        <main className="mx-auto container-max px-4 pb-6 sm:pb-8">
+
 
           {error && (
             <div className="mb-4 p-3 rounded-xl bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-400 border border-red-200 dark:border-red-900/30 text-sm">

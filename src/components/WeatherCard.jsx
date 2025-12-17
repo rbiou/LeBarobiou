@@ -1,5 +1,6 @@
 import React from 'react'
 import { WiHumidity, WiStrongWind, WiBarometer, WiRain, WiThermometer } from 'react-icons/wi'
+import { HiArrowTrendingUp, HiArrowTrendingDown, HiMinus } from 'react-icons/hi2'
 
 const iconMap = {
   temperature: WiThermometer,
@@ -36,14 +37,20 @@ export default function WeatherCard({
   const formatted = formatOneDecimal(value)
   const hasTrend = trendDiff !== null && trendDiff !== undefined && Number.isFinite(Number(trendDiff))
   const formattedTrend = hasTrend ? formatOneDecimal(Math.abs(trendDiff)) : null
-  const trendSign = hasTrend ? (trendDiff > 0 ? '+' : trendDiff < 0 ? '-' : '') : ''
-  const trendTone = trendDiff == null
-    ? 'bg-card-alt text-text-secondary'
-    : trendDiff > 0
-      ? 'bg-emerald-50 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-400'
-      : trendDiff < 0
-        ? 'bg-rose-50 dark:bg-rose-900/20 text-rose-700 dark:text-rose-400'
-        : 'bg-card-alt text-text-secondary'
+
+  // Revised Trend Logic: Simple text + icon, no background
+  let TrendIcon = HiMinus
+  let trendColor = 'text-text-muted'
+
+  if (hasTrend) {
+    if (trendDiff > 0) {
+      TrendIcon = HiArrowTrendingUp
+      trendColor = 'text-emerald-600 dark:text-emerald-400'
+    } else if (trendDiff < 0) {
+      TrendIcon = HiArrowTrendingDown
+      trendColor = 'text-rose-600 dark:text-rose-400'
+    }
+  }
   const minFormatted = formatOneDecimal(minValue)
   const maxFormatted = formatOneDecimal(maxValue)
   const formatTime = (time) => {
@@ -80,13 +87,13 @@ export default function WeatherCard({
         </div>
 
         {hasTrend && (
-          <div className={`flex min-w-[96px] flex-col items-end rounded-lg px-3 py-2 text-xs font-semibold ${trendTone}`}>
-            <span>
-              {trendSign}
-              {formattedTrend}
-              {trendUnit ? <span className="ml-1 font-medium">{trendUnit}</span> : null}
-            </span>
-            {trendLabel ? <span className="mt-0.5 text-[10px] font-normal opacity-80">{trendLabel}</span> : null}
+          <div className="flex flex-col items-end">
+            <div className={`flex items-center gap-1 text-sm font-semibold ${trendColor}`}>
+              <TrendIcon className="text-base" />
+              <span>{formattedTrend}</span>
+              {trendUnit && <span className="text-xs font-medium opacity-80">{trendUnit}</span>}
+            </div>
+            {trendLabel && <div className="text-[10px] text-text-muted">{trendLabel}</div>}
           </div>
         )}
       </div>

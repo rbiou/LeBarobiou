@@ -91,43 +91,51 @@ export default function PullToRefresh({ onRefresh, isRefreshing, children }) {
             onTouchEnd={handleTouchEnd}
             onTouchCancel={handleTouchCancel}
         >
-            {/* Loading Indicator - Mobile/Tablet Only (hidden lg+) */}
-            <div
-                className={`fixed left-0 right-0 top-0 z-[60] flex justify-center pointer-events-none lg:hidden
-              transition-transform duration-300 ease-out`}
+            {/* Embedded Pull/Click Indicator - Mobile only */}
+            <button
+                onClick={() => !isRefreshing && onRefresh()}
+                disabled={isRefreshing}
+                className="lg:hidden w-full flex items-center justify-center text-text-muted transition-colors cursor-pointer disabled:cursor-wait focus:outline-none active:text-text-muted"
                 style={{
-                    transform: `translateY(${showSpinner ? (isRefreshing ? 70 : (pullY > 0 ? pullY * 0.6 : -60)) : -80}px)`
+                    paddingTop: 8,
+                    paddingBottom: 8,
+                    height: isPulling ? Math.max(36 + pullY * 0.5, 36) : (isRefreshing && activeRefresh ? 52 : 36),
+                    transition: isPulling ? 'none' : 'height 0.3s cubic-bezier(0.2, 0.8, 0.2, 1)'
                 }}
             >
-                <div className={`
-                flex items-center justify-center w-10 h-10 rounded-full shadow-lg border border-white/20 bg-white dark:bg-slate-800 text-primary
-                transition-all duration-200
-                ${isTriggered ? 'scale-110 rotate-0' : 'scale-100'} 
-            `}>
+                <div className="flex items-center justify-center gap-2">
                     {isRefreshing ? (
-                        <HiArrowPath className="text-xl animate-spin" />
+                        <HiArrowPath className="text-lg animate-spin" />
                     ) : (
                         <HiArrowDown
-                            className="text-xl transition-transform duration-200"
+                            className="text-lg transition-transform duration-200"
                             style={{
-                                // Rotate 180deg (point up) when threshold reached
-                                transform: `rotate(${isTriggered ? -180 : 0}deg)`,
-                                opacity: pullY > 10 ? 1 : 0.5
+                                transform: `rotate(${isTriggered ? -180 : 0}deg)`
                             }}
                         />
                     )}
+                    <span className="text-xs">
+                        {isRefreshing ? 'Mise à jour...' : (isTriggered ? 'Relâcher pour actualiser' : 'Tirer ou appuyer pour actualiser')}
+                    </span>
                 </div>
+            </button>
+
+            {/* Desktop Refresh Button - Hidden on mobile */}
+            <div className="hidden lg:flex items-center justify-center py-3">
+                <button
+                    onClick={() => !isRefreshing && onRefresh()}
+                    disabled={isRefreshing}
+                    className="flex items-center gap-2 px-4 py-2 text-xs text-text-muted hover:text-text bg-card hover:bg-card-alt border border-border rounded-full transition-all cursor-pointer disabled:cursor-wait focus:outline-none shadow-sm hover:shadow active:scale-95"
+                >
+                    <HiArrowPath className={`text-sm ${isRefreshing ? 'animate-spin' : ''}`} />
+                    <span className="font-medium">
+                        {isRefreshing ? 'Mise à jour...' : 'Actualiser'}
+                    </span>
+                </button>
             </div>
 
-            {/* Content - Bounces on pull */}
-            <div
-                style={{
-                    transform: `translateY(${isPulling ? (pullY > 0 ? pullY * 0.4 : 0) : 0}px)`,
-                    transition: isPulling ? 'none' : 'transform 0.3s cubic-bezier(0.2, 0.8, 0.2, 1)'
-                }}
-            >
-                {children}
-            </div>
+            {/* Content */}
+            {children}
         </div>
     )
 }

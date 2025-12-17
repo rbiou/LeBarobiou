@@ -40,10 +40,10 @@ const PrecipitationCard = ({ loading, statusCard, summaryCards }) => {
                                     </div>
                                 </div>
                                 {statusCard.rateValue && (
-                                    <div className="flex items-baseline gap-1 text-2xl font-semibold text-text">
+                                    <div className="flex items-baseline gap-1 text-4xl font-bold tracking-tight text-text">
                                         <span>{statusCard.rateValue}</span>
                                         {statusCard.rateUnit && (
-                                            <span className="text-xs font-medium opacity-80">{statusCard.rateUnit}</span>
+                                            <span className="text-lg font-medium opacity-80">{statusCard.rateUnit}</span>
                                         )}
                                     </div>
                                 )}
