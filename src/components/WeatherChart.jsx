@@ -1,5 +1,5 @@
 import React, { useMemo, useState } from 'react'
-import { ResponsiveContainer, LineChart, Line, XAxis, YAxis, Tooltip, CartesianGrid, Legend, Bar } from 'recharts'
+import { ResponsiveContainer, LineChart, Line, XAxis, YAxis, Tooltip, CartesianGrid, Bar } from 'recharts'
 import { useTheme } from '../context/ThemeContext'
 import SwipeableTabs from './ui/SwipeableTabs'
 
@@ -184,8 +184,7 @@ export default function WeatherChart({ data, range = 'day', onRangeChange, loadi
     return makeHourlyTicks(min, max)
   }, [prepared, range])
 
-  const handleLegendClick = (entry) => {
-    const key = entry.dataKey
+  const handleLegendClick = (key) => {
     setVisible(v => ({ ...v, [key]: !v[key] }))
   }
 
@@ -224,9 +223,27 @@ export default function WeatherChart({ data, range = 'day', onRangeChange, loadi
   const showPressureAxis = visible.pressure
   const showRainAxis = visible.precipAmount || visible.precipRate || visible.precipCum
 
+  // Define Legend Items definition
+  const legendItems = [
+    { key: 'temperature', label: 'Température (°C)', color: colors.temp, type: 'line' },
+    { key: 'precipCum', label: 'Cumul pluie (mm)', color: colors.precipCum, type: 'line' },
+    { key: 'precipAmount', label: 'Total intervalle (mm)', color: colors.precipAmount, type: 'bar' },
+    { key: 'precipRate', label: 'Intensité (mm)', color: colors.precipRate, type: 'bar' },
+    { key: 'humidity', label: 'Humidité (%)', color: colors.humidity, type: 'line' },
+    { key: 'pressure', label: 'Pression (hPa)', color: colors.pressure, type: 'line' },
+    { key: 'temperatureMin', label: 'Temp min (°C)', color: colors.tempMin, type: 'line', dash: '4 4' },
+    { key: 'temperatureMax', label: 'Temp max (°C)', color: colors.tempMax, type: 'line', dash: '4 4' },
+  ].filter(item => {
+    // Filter out min/max temps if not 30d range
+    if (range !== '30d' && (item.key === 'temperatureMin' || item.key === 'temperatureMax')) {
+      return false
+    }
+    return true
+  })
+
   return (
     <div className="bg-card rounded-2xl shadow-soft p-4 sm:p-6 transition-colors">
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between mb-4">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between mb-2">
         <div className="text-sm text-text-muted">{RANGE_LABELS[range] || RANGE_LABELS.day}</div>
         <SwipeableTabs
           options={RANGE_OPTIONS}
@@ -259,165 +276,164 @@ export default function WeatherChart({ data, range = 'day', onRangeChange, loadi
       )}
 
       {!loading && !showEmptyState && (
-        <div className="w-full h-72 sm:h-80 select-none">
-          <ResponsiveContainer width="100%" height="100%">
-            <LineChart data={prepared} margin={{ top: 10, right: 20, left: 0, bottom: 0 }}>
-              <CartesianGrid strokeDasharray="3 3" stroke={colors.grid} />
-              <XAxis
-                dataKey="timeMs"
-                type="number"
-                domain={domain}
-                ticks={ticks}
-                tickFormatter={tickFormatter}
-                tick={{ fontSize: 12, fill: colors.text }}
-                minTickGap={10}
-                label={{ value: xAxisLabel, position: 'insideBottomRight', offset: -5, style: axisLabelStyle }}
-              />
-              <YAxis
-                yAxisId="left"
-                tick={{ fontSize: 12, fill: colors.text }}
-                domain={['auto', 'auto']}
-                tickFormatter={oneDecimal}
-                hide={!showLeftAxis}
-              />
-              <YAxis
-                yAxisId="right"
-                orientation="right"
-                tick={{ fontSize: 12, fill: colors.text }}
-                domain={[0, 100]}
-                tickFormatter={oneDecimal}
-                hide={!showHumidityAxis}
-                width={showHumidityAxis ? 40 : 0}
-              />
-              <YAxis
-                yAxisId="pressure"
-                orientation="right"
-                tick={{ fontSize: 12, fill: colors.text }}
-                domain={['auto', 'auto']}
-                tickFormatter={oneDecimal}
-                hide={!showPressureAxis}
-                width={showPressureAxis ? 48 : 0}
-              />
-              <YAxis
-                yAxisId="rain"
-                orientation="right"
-                tick={{ fontSize: 12, fill: colors.text }}
-                domain={rainScale.domain}
-                ticks={rainScale.ticks}
-                tickFormatter={rainTickFormatter}
-                hide={!showRainAxis}
-                width={showRainAxis ? 48 : 0}
-              />
-              <Tooltip
-                contentStyle={{
-                  backgroundColor: isDark ? '#1e293b' : '#ffffff',
-                  borderColor: isDark ? '#334155' : '#e2e8f0',
-                  color: isDark ? '#f1f5f9' : '#0f172a',
-                  borderRadius: '12px',
-                  boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)',
-                }}
-                labelFormatter={(v) => new Date(v).toLocaleString('fr-FR', { hour: '2-digit', minute: '2-digit', weekday: 'short' })}
-                formatter={(value, name, props) => {
-                  const { dataKey } = props || {}
-                  const toFixed = (val) => {
-                    const parsed = Number(val)
-                    return Number.isFinite(parsed) ? parsed.toFixed(1) : '—'
-                  }
-                  switch (dataKey) {
-                    case 'precipCum':
-                      return [toFixed(value), 'Cumul pluie (mm)']
-                    case 'temperature':
-                      return [toFixed(value), 'Température (°C)']
-                    case 'temperatureMin':
-                      return [toFixed(value), 'Température min (°C)']
-                    case 'temperatureMax':
-                      return [toFixed(value), 'Température max (°C)']
-                    case 'humidity':
-                      return [toFixed(value), 'Humidité (%)']
-                    case 'pressure':
-                      return [toFixed(value), 'Pression (hPa)']
-                    case 'precipRate':
-                      return [toFixed(value), 'Intensité (mm)']
-                    case 'precipAmount':
-                      return [toFixed(value), 'Total intervalle (mm)']
-                    default:
-                      return [value, name]
-                  }
-                }}
-              />
-              <Legend
-                content={({ payload }) => {
-                  if (!payload || !payload.length) return null
-                  const filtered = payload.filter((entry) => (
-                    range === '30d' || (entry.dataKey !== 'temperatureMin' && entry.dataKey !== 'temperatureMax')
-                  ))
-                  return (
-                    <div className="flex flex-wrap gap-3 px-2 text-xs sm:text-sm">
-                      {filtered.map((entry) => {
-                        const active = visible[entry.dataKey] !== false
-                        return (
-                          <button
-                            key={entry.dataKey}
-                            type="button"
-                            onClick={() => handleLegendClick(entry)}
-                            className={`flex items-center gap-2 transition ${active ? 'text-text' : 'text-text-muted'}`}
-                          >
-                            <span
-                              className="inline-block h-2.5 w-2.5 rounded-full"
-                              style={{
-                                backgroundColor: entry.color,
-                                border: entry.type === 'line' ? `1px solid ${entry.color}` : 'none',
-                                opacity: entry.type === 'line' && entry.payload?.strokeDasharray ? 0.7 : 1,
-                              }}
-                            />
-                            <span className={active ? '' : 'line-through opacity-60'}>{entry.value}</span>
-                          </button>
-                        )
-                      })}
-                    </div>
-                  )
-                }}
-              />
-              <Bar yAxisId="rain" dataKey="precipAmount" name="Total intervalle (mm)" fill={colors.precipAmount} opacity={0.45} hide={!visible.precipAmount} />
-              <Bar yAxisId="rain" dataKey="precipRate" name="Intensité (mm)" fill={colors.precipRate} opacity={0.6} hide={!visible.precipRate} />
-              <Line yAxisId="rain" type="monotone" dataKey="precipCum" name="Cumul pluie (mm)" stroke={colors.precipCum} strokeWidth={2} dot={false} hide={!visible.precipCum} />
-              <Line yAxisId="left" type="monotone" dataKey="temperature" name="Température (°C)" stroke={colors.temp} strokeWidth={2} dot={false} hide={!visible.temperature} />
-              <Line
-                yAxisId="left"
-                type="monotone"
-                dataKey="temperatureMin"
-                name="Température min (°C)"
-                stroke={colors.tempMin}
-                strokeDasharray="4 4"
-                strokeWidth={1.5}
-                dot={false}
-                hide={range !== '30d' || !visible.temperatureMin}
-              />
-              <Line
-                yAxisId="left"
-                type="monotone"
-                dataKey="temperatureMax"
-                name="Température max (°C)"
-                stroke={colors.tempMax}
-                strokeDasharray="4 4"
-                strokeWidth={1.5}
-                dot={false}
-                hide={range !== '30d' || !visible.temperatureMax}
-              />
-              <Line
-                yAxisId="pressure"
-                type="monotone"
-                dataKey="pressure"
-                name="Pression (hPa)"
-                stroke={colors.pressure}
-                strokeWidth={1.8}
-                dot={false}
-                hide={!visible.pressure}
-              />
-              <Line yAxisId="right" type="monotone" dataKey="humidity" name="Humidité (%)" stroke={colors.humidity} strokeWidth={2} dot={false} hide={!visible.humidity} />
-            </LineChart>
-          </ResponsiveContainer>
-        </div>
+        <>
+          {/* Custom HTML Legend - Outside of SVG */}
+          <div className="flex flex-wrap items-center justify-center gap-3 px-2 pb-4 pt-2 text-xs sm:text-sm border-b border-border/50 mb-0">
+            {legendItems.map((entry) => {
+              const active = visible[entry.key] !== false
+              return (
+                <button
+                  key={entry.key}
+                  type="button"
+                  onClick={() => handleLegendClick(entry.key)}
+                  className={`flex items-center gap-1.5 transition-opacity ${active ? 'opacity-100' : 'opacity-40 grayscale'}`}
+                >
+                  <span
+                    className="inline-block h-2.5 w-2.5 rounded-full"
+                    style={{
+                      backgroundColor: entry.color,
+                      border: entry.type === 'line' ? `1px solid ${entry.color}` : 'none',
+                      opacity: entry.type === 'line' && entry.dash ? 0.7 : 1,
+                    }}
+                  />
+                  <span className={`transition-all ${active ? 'font-medium text-text' : 'font-normal text-text-muted line-through'}`}>{entry.label}</span>
+                </button>
+              )
+            })}
+          </div>
+
+          <div className="w-full h-80 sm:h-96 select-none -ml-2">
+            <ResponsiveContainer width="100%" height="100%">
+              <LineChart data={prepared} margin={{ top: 10, right: 10, left: 10, bottom: 30 }}>
+                <CartesianGrid strokeDasharray="3 3" stroke={colors.grid} />
+                <XAxis
+                  dataKey="timeMs"
+                  type="number"
+                  domain={domain}
+                  ticks={ticks}
+                  tickFormatter={tickFormatter}
+                  tick={{ fontSize: 11, fill: colors.text }}
+                  minTickGap={20}
+                  height={30}
+                  padding={{ left: 10, right: 10 }}
+                  label={{ value: xAxisLabel, position: 'insideBottom', offset: -5, style: axisLabelStyle }}
+                />
+                <YAxis
+                  yAxisId="left"
+                  tick={{ fontSize: 11, fill: colors.text }}
+                  domain={['auto', 'auto']}
+                  tickFormatter={oneDecimal}
+                  hide={!showLeftAxis}
+                  width={35} // Explicit width to prevent clipping if negative margin used, or just control spacing
+                />
+                <YAxis
+                  yAxisId="right"
+                  orientation="right"
+                  tick={{ fontSize: 11, fill: colors.text }}
+                  domain={[0, 100]}
+                  tickFormatter={oneDecimal}
+                  hide={!showHumidityAxis}
+                  width={showHumidityAxis ? 35 : 0}
+                />
+                <YAxis
+                  yAxisId="pressure"
+                  orientation="right"
+                  tick={{ fontSize: 11, fill: colors.text }}
+                  domain={['auto', 'auto']}
+                  tickFormatter={oneDecimal}
+                  hide={!showPressureAxis}
+                  width={showPressureAxis ? 40 : 0}
+                />
+                <YAxis
+                  yAxisId="rain"
+                  orientation="right"
+                  tick={{ fontSize: 11, fill: colors.text }}
+                  domain={rainScale.domain}
+                  ticks={rainScale.ticks}
+                  tickFormatter={rainTickFormatter}
+                  hide={!showRainAxis}
+                  width={showRainAxis ? 35 : 0}
+                />
+                <Tooltip
+                  contentStyle={{
+                    backgroundColor: isDark ? '#1e293b' : '#ffffff',
+                    borderColor: isDark ? '#334155' : '#e2e8f0',
+                    color: isDark ? '#f1f5f9' : '#0f172a',
+                    borderRadius: '12px',
+                    boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)',
+                  }}
+                  labelFormatter={(v) => new Date(v).toLocaleString('fr-FR', { hour: '2-digit', minute: '2-digit', weekday: 'short' })}
+                  formatter={(value, name, props) => {
+                    const { dataKey } = props || {}
+                    const toFixed = (val) => {
+                      const parsed = Number(val)
+                      return Number.isFinite(parsed) ? parsed.toFixed(1) : '—'
+                    }
+                    switch (dataKey) {
+                      case 'precipCum':
+                        return [toFixed(value), 'Cumul pluie (mm)']
+                      case 'temperature':
+                        return [toFixed(value), 'Température (°C)']
+                      case 'temperatureMin':
+                        return [toFixed(value), 'Température min (°C)']
+                      case 'temperatureMax':
+                        return [toFixed(value), 'Température max (°C)']
+                      case 'humidity':
+                        return [toFixed(value), 'Humidité (%)']
+                      case 'pressure':
+                        return [toFixed(value), 'Pression (hPa)']
+                      case 'precipRate':
+                        return [toFixed(value), 'Intensité (mm)']
+                      case 'precipAmount':
+                        return [toFixed(value), 'Total intervalle (mm)']
+                      default:
+                        return [value, name]
+                    }
+                  }}
+                />
+                {/* No embedded Legend anymore */}
+
+                <Bar yAxisId="rain" dataKey="precipAmount" name="Total intervalle (mm)" fill={colors.precipAmount} opacity={0.45} hide={!visible.precipAmount} />
+                <Bar yAxisId="rain" dataKey="precipRate" name="Intensité (mm)" fill={colors.precipRate} opacity={0.6} hide={!visible.precipRate} />
+                <Line yAxisId="rain" type="monotone" dataKey="precipCum" name="Cumul pluie (mm)" stroke={colors.precipCum} strokeWidth={2} dot={false} hide={!visible.precipCum} />
+                <Line yAxisId="left" type="monotone" dataKey="temperature" name="Température (°C)" stroke={colors.temp} strokeWidth={2} dot={false} hide={!visible.temperature} />
+                <Line
+                  yAxisId="left"
+                  type="monotone"
+                  dataKey="temperatureMin"
+                  name="Température min (°C)"
+                  stroke={colors.tempMin}
+                  strokeDasharray="4 4"
+                  strokeWidth={1.5}
+                  dot={false}
+                  hide={range !== '30d' || !visible.temperatureMin}
+                />
+                <Line
+                  yAxisId="left"
+                  type="monotone"
+                  dataKey="temperatureMax"
+                  name="Température max (°C)"
+                  stroke={colors.tempMax}
+                  strokeDasharray="4 4"
+                  strokeWidth={1.5}
+                  dot={false}
+                  hide={range !== '30d' || !visible.temperatureMax}
+                />
+                <Line
+                  yAxisId="pressure"
+                  type="monotone"
+                  dataKey="pressure"
+                  name="Pression (hPa)"
+                  stroke={colors.pressure}
+                  strokeWidth={1.8}
+                  dot={false}
+                  hide={!visible.pressure}
+                />
+                <Line yAxisId="right" type="monotone" dataKey="humidity" name="Humidité (%)" stroke={colors.humidity} strokeWidth={2} dot={false} hide={!visible.humidity} />
+              </LineChart>
+            </ResponsiveContainer>
+          </div>
+        </>
       )}
     </div>
   )

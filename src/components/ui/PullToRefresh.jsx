@@ -4,7 +4,7 @@ import { HiArrowPath, HiArrowDown } from 'react-icons/hi2'
 export default function PullToRefresh({ onRefresh, isRefreshing, children }) {
     const [pullY, setPullY] = useState(0)
     const [isPulling, setIsPulling] = useState(false)
-    const [activeRefresh, setActiveRefresh] = useState(false) // Tracks if THIS component triggered the refresh
+    const [activeRefresh, setActiveRefresh] = useState(false)
     const touchStartY = useRef(0)
     const THRESHOLD = 80
 
@@ -16,7 +16,6 @@ export default function PullToRefresh({ onRefresh, isRefreshing, children }) {
         }
     }, [])
 
-    // Sync internal state with external isRefreshing prop
     useEffect(() => {
         if (!isRefreshing) {
             setActiveRefresh(false)
@@ -24,7 +23,9 @@ export default function PullToRefresh({ onRefresh, isRefreshing, children }) {
     }, [isRefreshing])
 
     const handleTouchStart = (e) => {
-        if (window.scrollY === 0 && !isRefreshing) {
+        // Simple and robust check: if it's a touch event, it's a touch interaction.
+        // We only care if we are at the top and not already refreshing.
+        if (window.scrollY <= 1 && !isRefreshing) {
             touchStartY.current = e.touches[0].clientY
             setIsPulling(true)
         } else {
@@ -37,9 +38,15 @@ export default function PullToRefresh({ onRefresh, isRefreshing, children }) {
         const currentY = e.touches[0].clientY
         const diff = currentY - touchStartY.current
 
-        if (diff > 0) {
+        if (diff > 0 && window.scrollY <= 1) {
+            // Prevent scrolling while pulling
+            if (e.cancelable) e.preventDefault()
             const dampedDiff = Math.pow(diff, 0.8)
             setPullY(Math.min(dampedDiff, 150))
+        } else {
+            // If we scroll down, cancel pull
+            setIsPulling(false)
+            setPullY(0)
         }
     }
 
@@ -48,7 +55,7 @@ export default function PullToRefresh({ onRefresh, isRefreshing, children }) {
 
         if (pullY > THRESHOLD) {
             if (navigator.vibrate) navigator.vibrate(10)
-            setActiveRefresh(true) // We are responsible for this refresh
+            setActiveRefresh(true)
             await onRefresh()
         }
 
@@ -61,11 +68,19 @@ export default function PullToRefresh({ onRefresh, isRefreshing, children }) {
         setPullY(0)
     }
 
-    const rotation = Math.min((pullY / THRESHOLD) * 360, 360)
+    // Stable Rotation Logic:
+    // Only rotate if we are past a minimal movement to avoid jitter at 0.
+    // Full 180deg flip happens at THRESHOLD.
+    // We stay at 180deg once passed threshold to indicate "Release to refresh".
+    const progress = Math.min(pullY / THRESHOLD, 1)
+    const rotation = progress * 180 // 0 to 180 degrees
     const isTriggered = pullY > THRESHOLD
 
-    // Only show the spinner visuals if ACTIVE REFRESH (we triggered it) or PULLING
-    // If manual refresh happens (isRefreshing=true but activeRefresh=false), we show NOTHING.
+    // Show spinner logic: 
+    // - Visible if pulling
+    // - Visible if this component triggered the refresh (activeRefresh)
+    // - Hidden purely on desktop interactions (mouse) because touch events won't fire.
+    //   But to be safe, the spinner is CSS-hidden on `lg:` screens as per user request.
     const showSpinner = isPulling || (isRefreshing && activeRefresh)
 
     return (
@@ -76,7 +91,7 @@ export default function PullToRefresh({ onRefresh, isRefreshing, children }) {
             onTouchEnd={handleTouchEnd}
             onTouchCancel={handleTouchCancel}
         >
-            {/* Loading Indicator - Mobile/Tablet Only */}
+            {/* Loading Indicator - Mobile/Tablet Only (hidden lg+) */}
             <div
                 className={`fixed left-0 right-0 top-0 z-[60] flex justify-center pointer-events-none lg:hidden
               transition-transform duration-300 ease-out`}
@@ -86,36 +101,31 @@ export default function PullToRefresh({ onRefresh, isRefreshing, children }) {
             >
                 <div className={`
                 flex items-center justify-center w-10 h-10 rounded-full shadow-lg border border-white/20 bg-white dark:bg-slate-800 text-primary
-                transition-transform duration-200
-                ${isTriggered ? 'scale-110' : 'scale-100'}
+                transition-all duration-200
+                ${isTriggered ? 'scale-110 rotate-0' : 'scale-100'} 
             `}>
                     {isRefreshing ? (
                         <HiArrowPath className="text-xl animate-spin" />
                     ) : (
                         <HiArrowDown
                             className="text-xl transition-transform duration-200"
-                            style={{ transform: `rotate(${rotation}deg)` }}
+                            style={{
+                                // Rotate 180deg (point up) when threshold reached
+                                transform: `rotate(${isTriggered ? -180 : 0}deg)`,
+                                opacity: pullY > 10 ? 1 : 0.5
+                            }}
                         />
                     )}
                 </div>
             </div>
 
-            {/* Content - Bounces on pull, but stays put during refresh */}
+            {/* Content - Bounces on pull */}
             <div
                 style={{
                     transform: `translateY(${isPulling ? (pullY > 0 ? pullY * 0.4 : 0) : 0}px)`,
                     transition: isPulling ? 'none' : 'transform 0.3s cubic-bezier(0.2, 0.8, 0.2, 1)'
                 }}
             >
-                {/* Visual Hint */}
-                <div className="absolute top-4 left-0 right-0 flex justify-center pointer-events-none opacity-50 lg:hidden transition-opacity duration-200"
-                    style={{ opacity: isRefreshing ? 0 : (pullY > 10 ? 0 : 0.5) }}>
-                    {/* Optional subtle text hint, or just let the arrow speak? 
-                    User asked to place indicator "above the header". 
-                    Circle UI essentially replaces the need for text hint.
-                    I will remove the text hint to keep it clean like standard Android/iOS.
-                */}
-                </div>
                 {children}
             </div>
         </div>

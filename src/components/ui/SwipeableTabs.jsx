@@ -64,12 +64,13 @@ export default function SwipeableTabs({
         setDragState(prev => ({ ...prev, currentX: clientX }));
     };
 
-    const handlePointerUp = () => {
+    const handlePointerUp = (e) => {
         if (!dragState.isDragging) return;
 
         const diff = dragState.currentX - dragState.startX;
         const threshold = dragState.itemWidth / 2;
 
+        // If moved significantly, stick to next/prev
         if (Math.abs(diff) > threshold) {
             const direction = diff > 0 ? 1 : -1;
             const newIndex = Math.max(0, Math.min(options.length - 1, activeIndex + direction));
@@ -77,6 +78,11 @@ export default function SwipeableTabs({
                 onChange(options[newIndex].value);
             }
         }
+        // If it was just a tap (minimal movement), find which item was tapped
+        // We can use the event target or calculate from clientX
+        // But the native onClick is safer for "what did I hit". 
+        // HOWEVER, if we are dragging, we don't want to trigger onClick potentially?
+        // Actually, if we dragged far, we consumed the action.
 
         setDragState(prev => ({ ...prev, isDragging: false }));
     };

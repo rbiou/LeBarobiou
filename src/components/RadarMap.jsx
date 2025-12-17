@@ -172,12 +172,12 @@ export default function RadarMap({ embedded = false } = {}) {
     const mapHeight = embedded ? 'min(60vh, 360px)' : '400px'
     const lightningTileUrl = 'https://tilecache.rainviewer.com/v2/lightning/latest/256/{z}/{x}/{y}.png'
 
-    // Stadia Maps - Alidade Smooth & Dark
+    // CartoDB - Positron (Light) & Dark Matter (Dark)
     const tileUrl = isDark
-        ? 'https://tiles.stadiamaps.com/tiles/alidade_smooth_dark/{z}/{x}/{y}{r}.png'
-        : 'https://tiles.stadiamaps.com/tiles/alidade_smooth/{z}/{x}/{y}{r}.png'
+        ? 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png'
+        : 'https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png'
 
-    const attribution = '&copy; <a href="https://stadiamaps.com/">Stadia Maps</a>, &copy; <a href="https://openmaptiles.org/">OpenMapTiles</a> &copy; <a href="http://openstreetmap.org">OpenStreetMap</a> contributors'
+    const attribution = '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>'
 
     return (
         <div className={wrapperClasses}>
