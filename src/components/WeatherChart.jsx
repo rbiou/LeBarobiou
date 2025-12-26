@@ -1,7 +1,8 @@
-import React, { useMemo, useState } from 'react'
+import React, { useMemo, useState, useRef, useEffect } from 'react'
 import { ResponsiveContainer, LineChart, Line, XAxis, YAxis, Tooltip, CartesianGrid, Bar } from 'recharts'
 import { useTheme } from '../context/ThemeContext'
 import SwipeableTabs from './ui/SwipeableTabs'
+import { FiMaximize, FiMinimize } from 'react-icons/fi'
 
 function floorToHour(date) {
   const d = new Date(date)
@@ -70,6 +71,9 @@ const tickFormatterFactory = (range) => {
 
 export default function WeatherChart({ data, range = 'day', onRangeChange, loading = false, error = null }) {
   const { isDark } = useTheme()
+  const containerRef = useRef(null)
+  const [isFullScreen, setIsFullScreen] = useState(false)
+
   const [visible, setVisible] = useState({
     temperature: true,
     temperatureMin: true,
@@ -239,10 +243,49 @@ export default function WeatherChart({ data, range = 'day', onRangeChange, loadi
     return true
   })
 
+  // Full Screen Logic
+  useEffect(() => {
+    const handleFullscreenChange = () => {
+      setIsFullScreen(!!document.fullscreenElement)
+    }
+    document.addEventListener('fullscreenchange', handleFullscreenChange)
+    return () => {
+      document.removeEventListener('fullscreenchange', handleFullscreenChange)
+    }
+  }, [])
+
+  const toggleFullScreen = async () => {
+    if (!containerRef.current) return
+    try {
+      if (!document.fullscreenElement) {
+        await containerRef.current.requestFullscreen()
+      } else {
+        await document.exitFullscreen()
+      }
+    } catch (err) {
+      console.error("Error toggling fullscreen: ", err)
+    }
+  }
+
   return (
-    <div className="bg-card rounded-2xl shadow-soft p-4 sm:p-6 transition-colors">
+    <div
+      ref={containerRef}
+      className={`bg-card rounded-2xl shadow-soft p-4 sm:p-6 transition-all ${isFullScreen ? 'flex flex-col p-4 sm:p-8 overflow-hidden bg-card/95 backdrop-blur-sm' : ''
+        }`}
+      style={isFullScreen ? { width: '100vw', height: '100vh', borderRadius: 0 } : {}}
+    >
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between mb-2">
-        <div className="text-sm text-text-muted">{RANGE_LABELS[range] || RANGE_LABELS.day}</div>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={toggleFullScreen}
+            className="p-1.5 rounded-full hover:bg-card-alt text-text-muted hover:text-text transition-colors"
+            title={isFullScreen ? "Quitter le plein écran" : "Plein écran"}
+          >
+            {isFullScreen ? <FiMinimize size={18} /> : <FiMaximize size={18} />}
+          </button>
+          <div className="text-sm text-text-muted">{RANGE_LABELS[range] || RANGE_LABELS.day}</div>
+        </div>
+
         <SwipeableTabs
           options={RANGE_OPTIONS}
           value={range}
@@ -274,9 +317,9 @@ export default function WeatherChart({ data, range = 'day', onRangeChange, loadi
       )}
 
       {!loading && !showEmptyState && (
-        <>
+        <div className={`flex flex-col ${isFullScreen ? 'flex-1 h-full' : ''}`}>
           {/* Custom HTML Legend - Outside of SVG */}
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2 px-1 pb-4 pt-2 border-b border-border/50 mb-0">
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2 px-1 pb-4 pt-2 border-b border-border/50 mb-0 shrink-0">
             {legendItems.map((entry) => {
               const active = visible[entry.key] !== false
               return (
@@ -304,7 +347,7 @@ export default function WeatherChart({ data, range = 'day', onRangeChange, loadi
             })}
           </div>
 
-          <div className="w-full h-80 sm:h-96 select-none -ml-2">
+          <div className={`${isFullScreen ? 'flex-1 w-full min-h-0' : 'w-full h-80 sm:h-96'} select-none -ml-2`}>
             <ResponsiveContainer width="100%" height="100%">
               <LineChart data={prepared} margin={{ top: 10, right: 10, left: 10, bottom: 30 }}>
                 <CartesianGrid strokeDasharray="3 3" stroke={colors.grid} />
@@ -364,7 +407,13 @@ export default function WeatherChart({ data, range = 'day', onRangeChange, loadi
                     borderRadius: '12px',
                     boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)',
                   }}
-                  labelFormatter={(v) => new Date(v).toLocaleString('fr-FR', { hour: '2-digit', minute: '2-digit', weekday: 'short' })}
+                  labelFormatter={(v) => {
+                    const d = new Date(v)
+                    if (range === '30d') {
+                      return d.toLocaleDateString('fr-FR', { weekday: 'short', day: 'numeric', month: 'short' })
+                    }
+                    return d.toLocaleString('fr-FR', { hour: '2-digit', minute: '2-digit', weekday: 'short' })
+                  }}
                   formatter={(value, name, props) => {
                     const { dataKey } = props || {}
                     const toFixed = (val) => {
@@ -435,7 +484,7 @@ export default function WeatherChart({ data, range = 'day', onRangeChange, loadi
               </LineChart>
             </ResponsiveContainer>
           </div>
-        </>
+        </div>
       )}
     </div>
   )
