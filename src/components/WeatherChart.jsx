@@ -2,7 +2,7 @@ import React, { useMemo, useState, useRef, useEffect } from 'react'
 import { ResponsiveContainer, LineChart, Line, XAxis, YAxis, Tooltip, CartesianGrid, Bar } from 'recharts'
 import { useTheme } from '../context/ThemeContext'
 import SwipeableTabs from './ui/SwipeableTabs'
-import { FiMaximize, FiMinimize } from 'react-icons/fi'
+import { FiMaximize, FiMinimize, FiX } from 'react-icons/fi'
 
 function floorToHour(date) {
   const d = new Date(date)
@@ -243,36 +243,55 @@ export default function WeatherChart({ data, range = 'day', onRangeChange, loadi
     return true
   })
 
-  // Full Screen Logic
+  // Full Screen & Orientation Logic
+  const [windowSize, setWindowSize] = useState({
+    width: typeof window !== 'undefined' ? window.innerWidth : 0,
+    height: typeof window !== 'undefined' ? window.innerHeight : 0,
+  })
+
   useEffect(() => {
-    const handleFullscreenChange = () => {
-      setIsFullScreen(!!document.fullscreenElement)
+    const handleResize = () => {
+      setWindowSize({
+        width: window.innerWidth,
+        height: window.innerHeight,
+      })
     }
-    document.addEventListener('fullscreenchange', handleFullscreenChange)
-    return () => {
-      document.removeEventListener('fullscreenchange', handleFullscreenChange)
-    }
+    window.addEventListener('resize', handleResize)
+    return () => window.removeEventListener('resize', handleResize)
   }, [])
 
-  const toggleFullScreen = async () => {
-    if (!containerRef.current) return
-    try {
-      if (!document.fullscreenElement) {
-        await containerRef.current.requestFullscreen()
-      } else {
-        await document.exitFullscreen()
-      }
-    } catch (err) {
-      console.error("Error toggling fullscreen: ", err)
-    }
+  const toggleFullScreen = () => {
+    setIsFullScreen(prev => !prev)
   }
+
+  // Determine if we need to force rotation
+  // Only if in full screen AND in portrait mode (height > width)
+  const isPortrait = windowSize.height > windowSize.width
+  const shouldRotate = isFullScreen && isPortrait
+
+  // Styles for full screen container
+  const fullScreenStyles = isFullScreen ? {
+    position: 'fixed',
+    top: shouldRotate ? '50%' : 0,
+    left: shouldRotate ? '50%' : 0,
+    width: shouldRotate ? '100vh' : '100vw',
+    height: shouldRotate ? '100vw' : '100vh',
+    transform: shouldRotate ? 'translate(-50%, -50%) rotate(90deg)' : 'none',
+    zIndex: 50,
+    borderRadius: 0,
+    margin: 0,
+  } : {}
+
+  const containerClasses = `bg-card rounded-2xl shadow-soft p-4 sm:p-6 transition-all ${isFullScreen ? 'overflow-hidden bg-card/95 backdrop-blur-sm flex flex-col' : ''
+    }`
+
+  // Adjust padding when rotated/fullscreen to maximize space
+  const contentPadding = isFullScreen ? (shouldRotate ? 'p-6 pb-2' : 'p-4 sm:p-8') : ''
 
   return (
     <div
-      ref={containerRef}
-      className={`bg-card rounded-2xl shadow-soft p-4 sm:p-6 transition-all ${isFullScreen ? 'flex flex-col p-4 sm:p-8 overflow-hidden bg-card/95 backdrop-blur-sm' : ''
-        }`}
-      style={isFullScreen ? { width: '100vw', height: '100vh', borderRadius: 0 } : {}}
+      className={`${containerClasses} ${contentPadding}`}
+      style={fullScreenStyles}
     >
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between mb-2">
         <div className="flex items-center gap-2">
@@ -296,6 +315,17 @@ export default function WeatherChart({ data, range = 'day', onRangeChange, loadi
           inactiveItemClassName="text-text-muted hover:text-text-secondary"
           indicatorClassName="rounded-full bg-primary/10 dark:bg-primary/20 border border-primary/50 scale-x-100"
         />
+
+        {/* Close button visible in fullscreen for ease of exit */}
+        {isFullScreen && (
+          <button
+            onClick={toggleFullScreen}
+            className="absolute top-4 right-4 p-2 rounded-full bg-card-alt/50 hover:bg-card-alt text-text-muted hover:text-text transition-colors sm:hidden"
+            style={{ zIndex: 60 }} // Above content
+          >
+            <FiX size={20} />
+          </button>
+        )}
       </div>
 
       {loading && (
@@ -317,7 +347,7 @@ export default function WeatherChart({ data, range = 'day', onRangeChange, loadi
       )}
 
       {!loading && !showEmptyState && (
-        <div className={`flex flex-col ${isFullScreen ? 'flex-1 h-full' : ''}`}>
+        <div className={`flex flex-col ${isFullScreen ? 'flex-1 h-full min-h-0' : ''}`}>
           {/* Custom HTML Legend - Outside of SVG */}
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2 px-1 pb-4 pt-2 border-b border-border/50 mb-0 shrink-0">
             {legendItems.map((entry) => {
