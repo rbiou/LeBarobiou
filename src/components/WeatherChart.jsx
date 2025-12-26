@@ -2,7 +2,7 @@ import React, { useMemo, useState, useRef, useEffect } from 'react'
 import { ResponsiveContainer, LineChart, Line, XAxis, YAxis, Tooltip, CartesianGrid, Bar } from 'recharts'
 import { useTheme } from '../context/ThemeContext'
 import SwipeableTabs from './ui/SwipeableTabs'
-import { FiMaximize, FiMinimize, FiX } from 'react-icons/fi'
+import { FiMaximize, FiMinimize, FiX, FiChevronLeft, FiChevronRight } from 'react-icons/fi'
 
 function floorToHour(date) {
   const d = new Date(date)
@@ -72,7 +72,24 @@ const tickFormatterFactory = (range) => {
 export default function WeatherChart({ data, range = 'day', onRangeChange, loading = false, error = null }) {
   const { isDark } = useTheme()
   const containerRef = useRef(null)
+
   const [isFullScreen, setIsFullScreen] = useState(false)
+
+  const [windowSize, setWindowSize] = useState({
+    width: typeof window !== 'undefined' ? window.innerWidth : 0,
+    height: typeof window !== 'undefined' ? window.innerHeight : 0,
+  })
+
+  useEffect(() => {
+    const handleResize = () => {
+      setWindowSize({
+        width: window.innerWidth,
+        height: window.innerHeight,
+      })
+    }
+    window.addEventListener('resize', handleResize)
+    return () => window.removeEventListener('resize', handleResize)
+  }, [])
 
   const [visible, setVisible] = useState({
     temperature: true,
@@ -84,6 +101,41 @@ export default function WeatherChart({ data, range = 'day', onRangeChange, loadi
     precipAmount: true,
     precipCum: true,
   })
+
+  // Legend Scroll Logic
+  const legendRef = useRef(null)
+  const [canScrollLeft, setCanScrollLeft] = useState(false)
+  const [canScrollRight, setCanScrollRight] = useState(false)
+
+  const checkScroll = () => {
+    if (legendRef.current) {
+      const { scrollLeft, scrollWidth, clientWidth } = legendRef.current
+      setCanScrollLeft(scrollLeft > 0)
+      // Use a small epsilon to handle float rounding issues if scaling occurs
+      setCanScrollRight(scrollLeft < scrollWidth - clientWidth - 1)
+    }
+  }
+
+  // Depends on data/windowSize/visible to re-check if scroll is needed
+  useEffect(() => {
+    checkScroll()
+    window.addEventListener('resize', checkScroll)
+    return () => window.removeEventListener('resize', checkScroll)
+  }, [data, visible, windowSize])
+
+  const scrollLegend = (direction) => {
+    if (legendRef.current) {
+      const scrollAmount = 150
+      legendRef.current.scrollBy({
+        left: direction === 'left' ? -scrollAmount : scrollAmount,
+        behavior: 'smooth'
+      })
+    }
+  }
+
+  const toggleFullScreen = () => {
+    setIsFullScreen(prev => !prev)
+  }
 
   // Theme-aware colors
   const colors = useMemo(() => isDark ? {
@@ -243,27 +295,6 @@ export default function WeatherChart({ data, range = 'day', onRangeChange, loadi
     return true
   })
 
-  // Full Screen & Orientation Logic
-  const [windowSize, setWindowSize] = useState({
-    width: typeof window !== 'undefined' ? window.innerWidth : 0,
-    height: typeof window !== 'undefined' ? window.innerHeight : 0,
-  })
-
-  useEffect(() => {
-    const handleResize = () => {
-      setWindowSize({
-        width: window.innerWidth,
-        height: window.innerHeight,
-      })
-    }
-    window.addEventListener('resize', handleResize)
-    return () => window.removeEventListener('resize', handleResize)
-  }, [])
-
-  const toggleFullScreen = () => {
-    setIsFullScreen(prev => !prev)
-  }
-
   // Determine if we need to force rotation
   // Only if in full screen AND in portrait mode (height > width)
   const isPortrait = windowSize.height > windowSize.width
@@ -348,33 +379,67 @@ export default function WeatherChart({ data, range = 'day', onRangeChange, loadi
 
       {!loading && !showEmptyState && (
         <div className={`flex flex-col ${isFullScreen ? 'flex-1 h-full min-h-0' : ''}`}>
-          {/* Custom HTML Legend - Outside of SVG */}
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2 px-1 pb-4 pt-2 border-b border-border/50 mb-0 shrink-0">
-            {legendItems.map((entry) => {
-              const active = visible[entry.key] !== false
-              return (
+          {/* Custom HTML Legend - Scrollable Row */}
+          <div className="relative shrink-0 border-b border-border/50 mb-0 group">
+
+            {/* Left Scroll Arrow */}
+            {canScrollLeft && (
+              <div className="absolute left-0 top-0 bottom-0 z-10 flex items-center bg-gradient-to-r from-card via-card to-transparent pl-0 pr-4">
                 <button
-                  key={entry.key}
-                  type="button"
-                  onClick={() => handleLegendClick(entry.key)}
-                  className={`flex items-center gap-2 px-2.5 py-2 rounded-lg transition-all touch-manipulation ${active ? 'opacity-100 bg-card-alt/50 shadow-sm border border-border/50' : 'opacity-50 grayscale hover:opacity-70'
-                    }`}
-                  aria-pressed={active}
+                  onClick={() => scrollLegend('left')}
+                  className="p-1 rounded-full bg-card-alt border border-border shadow-sm hover:bg-card-alt/80 text-text-muted hover:text-text transition-colors"
                 >
-                  <span
-                    className="inline-block w-2.5 h-2.5 rounded-full shrink-0"
-                    style={{
-                      backgroundColor: entry.color,
-                      border: entry.type === 'line' ? `1px solid ${entry.color}` : 'none',
-                      opacity: entry.type === 'line' && entry.dash ? 0.7 : 1,
-                    }}
-                  />
-                  <span className={`text-xs font-medium whitespace-nowrap ${active ? 'text-text' : 'text-text-muted line-through decoration-text-muted/50'}`}>
-                    {entry.label}
-                  </span>
+                  <FiChevronLeft size={14} />
                 </button>
-              )
-            })}
+              </div>
+            )}
+
+            <div
+              ref={legendRef}
+              onScroll={checkScroll}
+              className="flex items-center gap-2 overflow-x-auto px-1 pb-3 pt-2 no-scrollbar"
+              style={{ scrollbarWidth: 'none', msOverflowStyle: 'none', WebkitOverflowScrolling: 'touch' }}
+            >
+              {legendItems.map((entry) => {
+                const active = visible[entry.key] !== false
+                return (
+                  <button
+                    key={entry.key}
+                    type="button"
+                    onClick={() => handleLegendClick(entry.key)}
+                    className={`flex items-center gap-2 px-2.5 py-1.5 rounded-full transition-all touch-manipulation whitespace-nowrap border shrink-0 ${active ? 'opacity-100 bg-card-alt/50 shadow-sm border-border/50' : 'opacity-50 grayscale hover:opacity-70 border-transparent'
+                      }`}
+                    aria-pressed={active}
+                  >
+                    <span
+                      className="inline-block w-2.5 h-2.5 rounded-full shrink-0"
+                      style={{
+                        backgroundColor: entry.color,
+                        border: entry.type === 'line' ? `1px solid ${entry.color}` : 'none',
+                        opacity: entry.type === 'line' && entry.dash ? 0.7 : 1,
+                      }}
+                    />
+                    <span className={`text-xs font-medium whitespace-nowrap ${active ? 'text-text' : 'text-text-muted line-through decoration-text-muted/50'}`}>
+                      {entry.label}
+                    </span>
+                  </button>
+                )
+              })}
+              {/* Spacer */}
+              <div className="w-1 shrink-0" />
+            </div>
+
+            {/* Right Scroll Arrow */}
+            {canScrollRight && (
+              <div className="absolute right-0 top-0 bottom-0 z-10 flex items-center bg-gradient-to-l from-card via-card to-transparent pr-0 pl-4">
+                <button
+                  onClick={() => scrollLegend('right')}
+                  className="p-1 rounded-full bg-card-alt border border-border shadow-sm hover:bg-card-alt/80 text-text-muted hover:text-text transition-colors"
+                >
+                  <FiChevronRight size={14} />
+                </button>
+              </div>
+            )}
           </div>
 
           <div className={`${isFullScreen ? 'flex-1 w-full min-h-0' : 'w-full h-80 sm:h-96'} select-none -ml-2`}>
