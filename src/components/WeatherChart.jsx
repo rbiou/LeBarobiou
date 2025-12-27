@@ -1,5 +1,5 @@
 import React, { useMemo, useState, useRef, useEffect } from 'react'
-import { ResponsiveContainer, ComposedChart, Line, XAxis, YAxis, Tooltip, CartesianGrid, Bar, ReferenceArea } from 'recharts'
+import { ResponsiveContainer, ComposedChart, Line, XAxis, YAxis, Tooltip, CartesianGrid, Bar, ReferenceArea, ReferenceDot } from 'recharts'
 import { useTheme } from '../context/ThemeContext'
 import SwipeableTabs from './ui/SwipeableTabs'
 import { FiMaximize, FiMinimize, FiX, FiChevronLeft, FiChevronRight } from 'react-icons/fi'
@@ -406,6 +406,60 @@ export default function WeatherChart({ data, range = 'day', onRangeChange, loadi
     return { domain: [0, upperBound], ticks }
   }, [prepared, range])
 
+  // Find min/max temperature points for labels
+  const tempExtremes = useMemo(() => {
+    if (!prepared.length) return { min: null, max: null }
+
+    let minPoint = null
+    let maxPoint = null
+    let minTemp = Infinity
+    let maxTemp = -Infinity
+    const firstTime = prepared[0]?.timeMs
+    const lastTime = prepared[prepared.length - 1]?.timeMs
+    const timeRange = lastTime - firstTime
+
+    // First pass: find min/max temps for range calculation
+    prepared.forEach(entry => {
+      if (entry.temperature != null) {
+        minTemp = Math.min(minTemp, entry.temperature)
+        maxTemp = Math.max(maxTemp, entry.temperature)
+        if (!minPoint || entry.temperature < minPoint.temperature) {
+          minPoint = { timeMs: entry.timeMs, temperature: entry.temperature }
+        }
+        if (!maxPoint || entry.temperature > maxPoint.temperature) {
+          maxPoint = { timeMs: entry.timeMs, temperature: entry.temperature }
+        }
+      }
+    })
+
+    const tempRange = maxTemp - minTemp
+
+    // Calculate smart label positions based on location in chart
+    if (maxPoint) {
+      const positionInChartX = (maxPoint.timeMs - firstTime) / timeRange
+      // If near edges (first/last 10%), position label inside
+      maxPoint.labelPosition = positionInChartX < 0.1 ? 'right' : positionInChartX > 0.9 ? 'left' : 'top'
+    }
+    if (minPoint) {
+      const positionInChartX = (minPoint.timeMs - firstTime) / timeRange
+      // Default position
+      let minLabelPos = 'bottom'
+      // If near left/right edges, use side positions
+      if (positionInChartX < 0.1) {
+        minLabelPos = 'right'
+      } else if (positionInChartX > 0.9) {
+        minLabelPos = 'left'
+      } else {
+        // If min temp is near the bottom 20% of the temp range, put label on top to avoid X-axis
+        const positionInChartY = tempRange > 0 ? (minPoint.temperature - minTemp) / tempRange : 0
+        minLabelPos = positionInChartY < 0.2 ? 'top' : 'bottom'
+      }
+      minPoint.labelPosition = minLabelPos
+    }
+
+    return { min: minPoint, max: maxPoint }
+  }, [prepared])
+
   const ticks = useMemo(() => {
     if (!prepared.length) return []
     const min = prepared[0].timeMs
@@ -762,6 +816,84 @@ export default function WeatherChart({ data, range = 'day', onRangeChange, loadi
 
                 <Line yAxisId="rain" type="monotone" dataKey="precipCum" name="Cumul pluie (mm)" stroke={colors.precipCum} strokeWidth={2} dot={false} hide={!visible.precipCum} />
                 <Line yAxisId="left" type="monotone" dataKey="temperature" name="Température (°C)" stroke={colors.temp} strokeWidth={2} dot={false} hide={!visible.temperature} />
+
+                {/* Min/Max temperature labels */}
+                {visible.temperature && tempExtremes.max && (
+                  <ReferenceDot
+                    yAxisId="left"
+                    x={tempExtremes.max.timeMs}
+                    y={tempExtremes.max.temperature}
+                    r={0}
+                    fill="transparent"
+                    label={({ viewBox }) => {
+                      const pos = tempExtremes.max.labelPosition || 'top'
+                      const offsetX = pos === 'left' ? -8 : pos === 'right' ? 8 : 0
+                      const offsetY = pos === 'top' ? -12 : pos === 'bottom' ? 16 : 0
+                      return (
+                        <g>
+                          <rect
+                            x={viewBox.x + offsetX - 18}
+                            y={viewBox.y + offsetY - 8}
+                            width={36}
+                            height={16}
+                            rx={4}
+                            fill={isDark ? 'rgba(30, 41, 59, 0.9)' : 'rgba(255, 255, 255, 0.9)'}
+                            stroke={colors.tempMax}
+                            strokeWidth={1}
+                          />
+                          <text
+                            x={viewBox.x + offsetX}
+                            y={viewBox.y + offsetY + 4}
+                            fill={colors.tempMax}
+                            fontSize={11}
+                            fontWeight={600}
+                            textAnchor="middle"
+                          >
+                            {tempExtremes.max.temperature.toFixed(1)}°
+                          </text>
+                        </g>
+                      )
+                    }}
+                  />
+                )}
+                {visible.temperature && tempExtremes.min && (
+                  <ReferenceDot
+                    yAxisId="left"
+                    x={tempExtremes.min.timeMs}
+                    y={tempExtremes.min.temperature}
+                    r={0}
+                    fill="transparent"
+                    label={({ viewBox }) => {
+                      const pos = tempExtremes.min.labelPosition || 'bottom'
+                      const offsetX = pos === 'left' ? -8 : pos === 'right' ? 8 : 0
+                      const offsetY = pos === 'top' ? -12 : pos === 'bottom' ? 16 : 0
+                      return (
+                        <g>
+                          <rect
+                            x={viewBox.x + offsetX - 18}
+                            y={viewBox.y + offsetY - 8}
+                            width={36}
+                            height={16}
+                            rx={4}
+                            fill={isDark ? 'rgba(30, 41, 59, 0.9)' : 'rgba(255, 255, 255, 0.9)'}
+                            stroke={colors.tempMin}
+                            strokeWidth={1}
+                          />
+                          <text
+                            x={viewBox.x + offsetX}
+                            y={viewBox.y + offsetY + 4}
+                            fill={colors.tempMin}
+                            fontSize={11}
+                            fontWeight={600}
+                            textAnchor="middle"
+                          >
+                            {tempExtremes.min.temperature.toFixed(1)}°
+                          </text>
+                        </g>
+                      )
+                    }}
+                  />
+                )}
                 <Line
                   yAxisId="left"
                   type="monotone"
