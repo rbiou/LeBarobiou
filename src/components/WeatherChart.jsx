@@ -1,5 +1,5 @@
 import React, { useMemo, useState, useRef, useEffect } from 'react'
-import { ResponsiveContainer, LineChart, Line, XAxis, YAxis, Tooltip, CartesianGrid, Bar } from 'recharts'
+import { ResponsiveContainer, ComposedChart, Line, XAxis, YAxis, Tooltip, CartesianGrid, Bar, ReferenceArea } from 'recharts'
 import { useTheme } from '../context/ThemeContext'
 import SwipeableTabs from './ui/SwipeableTabs'
 import { FiMaximize, FiMinimize, FiX, FiChevronLeft, FiChevronRight } from 'react-icons/fi'
@@ -163,7 +163,7 @@ export default function WeatherChart({ data, range = 'day', onRangeChange, loadi
   }, [isDark])
 
   const prepared = useMemo(() => {
-    const arr = (data || [])
+    let arr = (data || [])
       .map(d => {
         const ts = d?.ts instanceof Date ? d.ts : new Date(d?.ts)
         if (!(ts instanceof Date) || Number.isNaN(ts.getTime())) return null
@@ -190,20 +190,195 @@ export default function WeatherChart({ data, range = 'day', onRangeChange, loadi
       cum += Number(it.precipAmount) || 0
       it.precipCum = cum
     }
+
+    // Aggregation Logic
+    if (range === '30d') {
+      // Daily Aggregation for 30d
+      const dailySums = {}
+      arr.forEach((entry, index) => {
+        const date = new Date(entry.timeMs)
+        const key = date.toLocaleDateString('en-CA') // YYYY-MM-DD
+
+        if (!dailySums[key]) {
+          dailySums[key] = { sum: 0, indices: [] }
+        }
+        dailySums[key].sum += entry.precipAmount || 0
+        dailySums[key].indices.push(index)
+      })
+
+      Object.keys(dailySums).forEach(key => {
+        const { sum, indices } = dailySums[key]
+        if (indices.length > 0) {
+          const middleIndex = indices[Math.floor(indices.length / 2)]
+          arr[middleIndex].dailyPrecip = sum
+        }
+      })
+    } else if (range === '7d') {
+      // 6-Hour Aggregation for 7d (4 bars per day)
+      const sixHourSums = {}
+
+      arr.forEach((entry, index) => {
+        const date = new Date(entry.timeMs)
+        const hour = date.getHours()
+        const period = Math.floor(hour / 6) // 0=00-06, 1=06-12, 2=12-18, 3=18-24
+        const key = `${date.toLocaleDateString('en-CA')} ${period}` // YYYY-MM-DD P
+
+        if (!sixHourSums[key]) {
+          sixHourSums[key] = { sum: 0, indices: [], date: date.toLocaleDateString('en-CA'), period }
+        }
+        sixHourSums[key].sum += entry.precipAmount || 0
+        sixHourSums[key].indices.push(index)
+      })
+
+      Object.keys(sixHourSums).forEach(key => {
+        const { sum, indices, period } = sixHourSums[key]
+        if (indices.length > 0) {
+          // Assign to middle point only for single bar per interval
+          const middleIndex = indices[Math.floor(indices.length / 2)]
+          arr[middleIndex].sixHourPrecip = sum
+          // Store time range for tooltip
+          const startHour = period * 6
+          const endHour = startHour + 6
+          arr[middleIndex].precipTimeRange = `${String(startHour).padStart(2, '0')}:00-${String(endHour).padStart(2, '0')}:00`
+        }
+      })
+    } else if (range === 'day') {
+      // Hourly Aggregation for day
+      const hourlySums = {}
+
+      arr.forEach((entry, index) => {
+        const date = new Date(entry.timeMs)
+        const key = `${date.toLocaleDateString('en-CA')} ${date.getHours()}` // YYYY-MM-DD H
+
+        if (!hourlySums[key]) {
+          hourlySums[key] = { sum: 0, indices: [] }
+        }
+        hourlySums[key].sum += entry.precipAmount || 0
+        hourlySums[key].indices.push(index)
+      })
+
+      Object.keys(hourlySums).forEach(key => {
+        const { sum, indices } = hourlySums[key]
+        if (indices.length > 0) {
+          // Assign to middle point only for single bar per interval
+          const middleIndex = indices[Math.floor(indices.length / 2)]
+          arr[middleIndex].hourlyPrecip = sum
+        }
+      })
+    }
+
     return arr
-  }, [data])
+  }, [data, range])
+
+  // Create separate dataset for precipitation bars with explicit time ranges
+  const precipBars = useMemo(() => {
+    if (!prepared.length) return []
+
+    const bars = []
+
+    if (range === '30d') {
+      // Daily bars
+      const dailySums = {}
+      prepared.forEach(entry => {
+        const date = new Date(entry.timeMs)
+        date.setHours(0, 0, 0, 0)
+        const startMs = date.getTime()
+        const endMs = startMs + 24 * 60 * 60 * 1000
+        const key = startMs
+
+        if (!dailySums[key]) {
+          dailySums[key] = { startMs, endMs, sum: 0 }
+        }
+        dailySums[key].sum += entry.precipAmount || 0
+      })
+
+      Object.values(dailySums).forEach(({ startMs, endMs, sum }) => {
+        if (sum > 0) {
+          bars.push({ startMs, endMs, value: sum, label: 'Pluie (24h)' })
+        }
+      })
+    } else if (range === '7d') {
+      // 6-hour bars
+      const sixHourSums = {}
+      prepared.forEach(entry => {
+        const date = new Date(entry.timeMs)
+        const hour = date.getHours()
+        const period = Math.floor(hour / 6)
+
+        const startDate = new Date(date)
+        startDate.setHours(period * 6, 0, 0, 0)
+        const startMs = startDate.getTime()
+        const endMs = startMs + 6 * 60 * 60 * 1000
+        const key = startMs
+
+        if (!sixHourSums[key]) {
+          const startHour = period * 6
+          const endHour = startHour + 6
+          sixHourSums[key] = {
+            startMs,
+            endMs,
+            sum: 0,
+            label: `${String(startHour).padStart(2, '0')}:00-${String(endHour).padStart(2, '0')}:00`
+          }
+        }
+        sixHourSums[key].sum += entry.precipAmount || 0
+      })
+
+      Object.values(sixHourSums).forEach(({ startMs, endMs, sum, label }) => {
+        if (sum > 0) {
+          bars.push({ startMs, endMs, value: sum, label: `Pluie ${label}` })
+        }
+      })
+    } else if (range === 'day') {
+      // Hourly bars
+      const hourlySums = {}
+      prepared.forEach(entry => {
+        const date = new Date(entry.timeMs)
+        const startDate = new Date(date)
+        startDate.setMinutes(0, 0, 0)
+        const startMs = startDate.getTime()
+        const endMs = startMs + 60 * 60 * 1000
+        const key = startMs
+
+        if (!hourlySums[key]) {
+          hourlySums[key] = { startMs, endMs, sum: 0 }
+        }
+        hourlySums[key].sum += entry.precipAmount || 0
+      })
+
+      Object.values(hourlySums).forEach(({ startMs, endMs, sum }) => {
+        if (sum > 0) {
+          bars.push({ startMs, endMs, value: sum, label: 'Pluie (1h)' })
+        }
+      })
+    }
+
+    return bars
+  }, [prepared, range])
 
   const rainScale = useMemo(() => {
     if (!prepared.length) {
       return { domain: [0, 1], ticks: [0, 1] }
     }
 
-    const maxCum = prepared.reduce((acc, entry) => {
-      const value = Number(entry?.precipCum)
-      return Number.isFinite(value) && value > acc ? value : acc
+    // Adapt scale max calculation to consider dailyPrecip if active
+    const isDailyRange = range === '30d' || range === '7d'
+
+    // Find absolute max between cumulative and bars (daily or normal)
+    const maxVal = prepared.reduce((acc, entry) => {
+      let val = Number(entry?.precipCum)
+      if (Number.isFinite(val) && val > acc) acc = val
+
+      const barVal = range === '30d'
+        ? Number(entry?.dailyPrecip || 0)
+        : (range === '7d' ? Number(entry?.sixHourPrecip || 0) : Number(entry?.hourlyPrecip || 0))
+
+      if (Number.isFinite(barVal) && barVal > acc) acc = barVal
+
+      return acc
     }, 0)
 
-    const safeMax = Number.isFinite(maxCum) && maxCum > 0 ? maxCum : 0
+    const safeMax = Number.isFinite(maxVal) && maxVal > 0 ? maxVal : 0
 
     const computeStep = (maxValue) => {
       if (!Number.isFinite(maxValue) || maxValue <= 0) return 1
@@ -229,7 +404,7 @@ export default function WeatherChart({ data, range = 'day', onRangeChange, loadi
     }
 
     return { domain: [0, upperBound], ticks }
-  }, [prepared])
+  }, [prepared, range])
 
   const ticks = useMemo(() => {
     if (!prepared.length) return []
@@ -279,10 +454,13 @@ export default function WeatherChart({ data, range = 'day', onRangeChange, loadi
   const showPressureAxis = visible.pressure
   const showRainAxis = visible.precipAmount || visible.precipRate || visible.precipCum
 
+  const isDailyRange = range === '30d' || range === '7d'
+
   // Define Legend Items definition
   const legendItems = [
     { key: 'temperature', label: 'Température (°C)', color: colors.temp, type: 'line' },
     { key: 'precipCum', label: 'Cumul pluie (mm)', color: colors.precipCum, type: 'line' },
+    { key: 'precipAmount', label: range === '30d' ? 'Pluie par jour (mm)' : (range === '7d' ? 'Pluie (6h) (mm)' : 'Pluie par heure (mm)'), color: colors.precipAmount, type: 'bar' },
     { key: 'humidity', label: 'Humidité (%)', color: colors.humidity, type: 'line' },
     { key: 'pressure', label: 'Pression (hPa)', color: colors.pressure, type: 'line' },
     { key: 'temperatureMin', label: 'Temp min (°C)', color: colors.tempMin, type: 'line', dash: '4 4' },
@@ -318,6 +496,22 @@ export default function WeatherChart({ data, range = 'day', onRangeChange, loadi
 
   // Adjust padding when rotated/fullscreen to maximize space
   const contentPadding = isFullScreen ? (shouldRotate ? 'p-6 pb-2' : 'p-4 sm:p-8') : ''
+
+  // Responsive Bar Sizing Logic - Proportional to time interval / total period
+  const chartWidth = shouldRotate ? windowSize.height : windowSize.width
+  // Estimate the actual plot area width
+  // Container width - left Y-axis (~40px) - right Y-axes (varies) - container padding
+  const estimatedPlotWidth = Math.max(150, chartWidth * 0.75) // ~75% of container is plot area
+
+  // Calculate bar width based on time proportion
+  // Each bar should span its time interval visually on the X-axis
+  // 30d: 1 day / 30 days = 1/30 of plot width
+  // 7d: 6 hours / 168 hours = 1/28 of plot width  
+  // day: 1 hour / 24 hours = 1/24 of plot width
+  const width30d = Math.max(8, Math.floor(estimatedPlotWidth / 30))
+  const width7d = Math.max(8, Math.floor(estimatedPlotWidth / 28))
+  const widthDay = Math.max(8, Math.floor(estimatedPlotWidth / 24))
+
 
   return (
     <div
@@ -444,7 +638,7 @@ export default function WeatherChart({ data, range = 'day', onRangeChange, loadi
 
           <div className={`${isFullScreen ? 'flex-1 w-full min-h-0' : 'w-full h-80 sm:h-96'} select-none -ml-2`}>
             <ResponsiveContainer width="100%" height="100%">
-              <LineChart data={prepared} margin={{ top: 10, right: 10, left: 10, bottom: 30 }}>
+              <ComposedChart data={prepared} margin={{ top: 10, right: 10, left: 10, bottom: 30 }}>
                 <CartesianGrid strokeDasharray="3 3" stroke={colors.grid} />
                 <XAxis
                   dataKey="timeMs"
@@ -509,38 +703,63 @@ export default function WeatherChart({ data, range = 'day', onRangeChange, loadi
                     }
                     return d.toLocaleString('fr-FR', { hour: '2-digit', minute: '2-digit', weekday: 'short' })
                   }}
-                  formatter={(value, name, props) => {
-                    const { dataKey } = props || {}
+                  content={({ active, payload, label }) => {
+                    if (!active || !payload || !payload.length) return null
+
                     const toFixed = (val) => {
                       const parsed = Number(val)
                       return Number.isFinite(parsed) ? parsed.toFixed(1) : '—'
                     }
-                    switch (dataKey) {
-                      case 'precipCum':
-                        return [toFixed(value), 'Cumul pluie (mm)']
-                      case 'temperature':
-                        return [toFixed(value), 'Température (°C)']
-                      case 'temperatureMin':
-                        return [toFixed(value), 'Température min (°C)']
-                      case 'temperatureMax':
-                        return [toFixed(value), 'Température max (°C)']
-                      case 'humidity':
-                        return [toFixed(value), 'Humidité (%)']
-                      case 'pressure':
-                        return [toFixed(value), 'Pression (hPa)']
-                      case 'precipRate':
-                        return [toFixed(value), 'Intensité (mm)']
-                      case 'precipAmount':
-                        return [toFixed(value), 'Total intervalle (mm)']
-                      default:
-                        return [value, name]
-                    }
+
+                    const d = new Date(label)
+                    const dateLabel = range === '30d'
+                      ? d.toLocaleDateString('fr-FR', { weekday: 'short', day: 'numeric', month: 'short' })
+                      : d.toLocaleString('fr-FR', { hour: '2-digit', minute: '2-digit', weekday: 'short' })
+
+                    // Find precipitation bar for this timestamp
+                    const precipBar = precipBars.find(bar => label >= bar.startMs && label < bar.endMs)
+
+                    return (
+                      <div style={{
+                        backgroundColor: isDark ? '#1e293b' : '#ffffff',
+                        border: `1px solid ${isDark ? '#334155' : '#e2e8f0'}`,
+                        borderRadius: '12px',
+                        padding: '8px 12px',
+                        boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)',
+                      }}>
+                        <p style={{ margin: 0, fontWeight: 600, marginBottom: '4px' }}>{dateLabel}</p>
+                        {payload.filter(entry => entry.value != null && entry.value !== undefined).map((entry, index) => (
+                          <p key={index} style={{ margin: '2px 0', color: entry.color }}>
+                            {entry.name}: {toFixed(entry.value)}
+                          </p>
+                        ))}
+                        {precipBar && visible.precipAmount && (
+                          <p style={{ margin: '2px 0', color: colors.precipAmount }}>
+                            {precipBar.label}: {toFixed(precipBar.value)} mm
+                          </p>
+                        )}
+                      </div>
+                    )
                   }}
                 />
                 {/* No embedded Legend anymore */}
 
-                <Bar yAxisId="rain" dataKey="precipAmount" name="Total intervalle (mm)" fill={colors.precipAmount} opacity={0.45} hide={!visible.precipAmount} />
-                <Bar yAxisId="rain" dataKey="precipRate" name="Intensité (mm)" fill={colors.precipRate} opacity={0.6} hide={!visible.precipRate} />
+                {/* Render precipitation bars as ReferenceAreas for true proportional width */}
+                {visible.precipAmount && precipBars.map((bar, idx) => (
+                  <ReferenceArea
+                    key={`precip-${idx}`}
+                    yAxisId="rain"
+                    x1={bar.startMs}
+                    x2={bar.endMs}
+                    y1={0}
+                    y2={bar.value}
+                    fill={colors.precipAmount}
+                    fillOpacity={0.8}
+                    stroke={colors.precipAmount}
+                    strokeOpacity={0.3}
+                  />
+                ))}
+
                 <Line yAxisId="rain" type="monotone" dataKey="precipCum" name="Cumul pluie (mm)" stroke={colors.precipCum} strokeWidth={2} dot={false} hide={!visible.precipCum} />
                 <Line yAxisId="left" type="monotone" dataKey="temperature" name="Température (°C)" stroke={colors.temp} strokeWidth={2} dot={false} hide={!visible.temperature} />
                 <Line
@@ -576,7 +795,7 @@ export default function WeatherChart({ data, range = 'day', onRangeChange, loadi
                   hide={!visible.pressure}
                 />
                 <Line yAxisId="right" type="monotone" dataKey="humidity" name="Humidité (%)" stroke={colors.humidity} strokeWidth={2} dot={false} hide={!visible.humidity} />
-              </LineChart>
+              </ComposedChart>
             </ResponsiveContainer>
           </div>
         </div>
