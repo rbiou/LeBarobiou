@@ -67,6 +67,17 @@ export default function WeatherChart({ data, range = 'day', onRangeChange, loadi
 
   const [isFullScreen, setIsFullScreen] = useState(false)
 
+  useEffect(() => {
+    if (isFullScreen) {
+      document.body.style.overflow = 'hidden'
+    } else {
+      document.body.style.overflow = ''
+    }
+    return () => {
+      document.body.style.overflow = ''
+    }
+  }, [isFullScreen])
+
   const [windowSize, setWindowSize] = useState({
     width: typeof window !== 'undefined' ? window.innerWidth : 0,
     height: typeof window !== 'undefined' ? window.innerHeight : 0,
@@ -403,7 +414,7 @@ export default function WeatherChart({ data, range = 'day', onRangeChange, loadi
   const legendItems = [
     { key: 'temperature', label: t('chart.series.temperature'), color: colors.temp, type: 'line' },
     { key: 'precipCum', label: t('chart.series.precipCum'), color: colors.precipCum, type: 'line' },
-    { key: 'precipAmount', label: range === '30d' ? t('chart.series.precipCum') : (range === '7d' ? t('chart.series.precipCum') : t('chart.series.precipRate')), color: colors.precipAmount, type: 'bar' }, // Labels simplified to 'Rain...'
+    { key: 'precipAmount', label: t('chart.series.precipRain'), color: colors.precipAmount, type: 'bar' },
     { key: 'humidity', label: t('chart.series.humidity'), color: colors.humidity, type: 'line' },
     { key: 'pressure', label: t('chart.series.pressure'), color: colors.pressure, type: 'line' },
     { key: 'temperatureMin', label: t('chart.tempMin'), color: colors.tempMin, type: 'line', dash: '4 4' },

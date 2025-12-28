@@ -1,10 +1,16 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { FiArrowLeft, FiChevronDown, FiChevronUp, FiCheck } from 'react-icons/fi'
 import { WiThermometer, WiRain, WiStrongWind, WiDaySunny, WiTime3 } from 'react-icons/wi'
 import { useSettings } from '../context/SettingsContext'
+import Select from './ui/Select'
+import { HiGlobeAlt } from 'react-icons/hi2'
 
 export default function SettingsPage({ onBack }) {
     const { settings, updateSetting, toggleSetting, t } = useSettings()
+
+    useEffect(() => {
+        window.scrollTo(0, 0)
+    }, [])
 
     return (
         <div className="min-h-screen bg-bg text-text transition-colors duration-300">
@@ -29,25 +35,15 @@ export default function SettingsPage({ onBack }) {
                     <h2 className="text-sm font-semibold uppercase tracking-wider text-text-muted mb-4 px-1">
                         {t('settings.language')}
                     </h2>
-                    <div className="flex gap-2 p-1 bg-card-alt rounded-2xl border border-border relative">
-                        {['auto', 'fr', 'en'].map((lang) => {
-                            const isActive = settings.language === lang
-                            return (
-                                <button
-                                    key={lang}
-                                    onClick={() => updateSetting('language', lang)}
-                                    className={`
-                    flex-1 py-2.5 rounded-xl text-sm font-medium transition-all duration-300 relative z-10
-                    ${isActive
-                                            ? 'bg-white dark:bg-slate-700 text-primary shadow-sm ring-1 ring-black/5 dark:ring-white/10'
-                                            : 'text-text-secondary hover:text-text hover:bg-black/5 dark:hover:bg-white/5'}
-                  `}
-                                >
-                                    {t(`settings.language.${lang}`)}
-                                </button>
-                            )
-                        })}
-                    </div>
+                    <Select
+                        options={[
+                            { value: 'auto', label: t('settings.language.auto'), icon: HiGlobeAlt },
+                            { value: 'fr', label: t('settings.language.fr') },
+                            { value: 'en', label: t('settings.language.en') }
+                        ]}
+                        value={settings.language}
+                        onChange={(val) => updateSetting('language', val)}
+                    />
                 </section>
 
                 {/* Blocs Configuration - List of cards */}
@@ -114,7 +110,8 @@ export default function SettingsPage({ onBack }) {
                                         { key: 'temperature', label: t('chart.series.temperature') },
                                         { key: 'humidity', label: t('chart.series.humidity') },
                                         { key: 'pressure', label: t('chart.series.pressure') },
-                                        { key: 'precipAmount', label: t('chart.series.precipCum') },
+                                        { key: 'precipAmount', label: t('chart.series.precipRain') },
+                                        { key: 'precipCum', label: t('chart.series.precipCum') },
                                     ].map(({ key, label }) => {
                                         const isAvailable = settings.chart.selectableInLegend[key]
                                         const labelContent = (
@@ -163,7 +160,8 @@ export default function SettingsPage({ onBack }) {
                                         { key: 'temperature', label: t('chart.series.temperature') },
                                         { key: 'humidity', label: t('chart.series.humidity') },
                                         { key: 'pressure', label: t('chart.series.pressure') },
-                                        { key: 'precipAmount', label: t('chart.series.precipCum') },
+                                        { key: 'precipAmount', label: t('chart.series.precipRain') },
+                                        { key: 'precipCum', label: t('chart.series.precipCum') },
                                     ].map(({ key, label }) => (
                                         <Checkbox
                                             key={key}
