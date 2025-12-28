@@ -1,45 +1,42 @@
-export const formatDateTime = (date) => {
-    return date ? new Date(date).toLocaleString('fr-FR', {
+export const formatDateTime = (date, locale = 'fr-FR') => {
+    return date ? new Date(date).toLocaleString(locale, {
         hour: '2-digit',
         minute: '2-digit',
         day: '2-digit',
         month: '2-digit',
-        timeZone: 'Europe/Paris'
     }) : '—'
 }
 
-export const formatClock = (value) => {
+export const formatClock = (value, locale = 'fr-FR') => {
     if (!value) return '--:--'
     const d = new Date(value)
-    return d.toLocaleTimeString('fr-FR', {
+    return d.toLocaleTimeString(locale, {
         hour: '2-digit',
         minute: '2-digit',
         hour12: false,
-        timeZone: 'Europe/Paris'
     })
 }
 
-export const formatDateLabel = (value) => {
+export const formatDateLabel = (value, locale = 'fr-FR') => {
     if (!value) return ''
     const d = new Date(value)
-    return d.toLocaleDateString('fr-FR', {
+    return d.toLocaleDateString(locale, {
         weekday: 'short',
         day: 'numeric',
         month: 'short',
-        timeZone: 'Europe/Paris'
     })
 }
 
-export const formatDaysUntil = (value) => {
+export const formatDaysUntil = (value, t) => {
     if (!value) return ''
     const now = new Date()
     const d = new Date(value)
     const diffTime = d - now
     const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24))
 
-    if (diffDays <= 0) return "Aujourd'hui"
-    if (diffDays === 1) return 'Demain'
-    return `Dans ${diffDays} jours`
+    if (diffDays <= 0) return t ? t('date.today') : "Aujourd'hui"
+    if (diffDays === 1) return t ? t('date.tomorrow') : 'Demain'
+    return t ? t('date.in_days').replace('{days}', diffDays) : `Dans ${diffDays} jours`
 }
 
 export const formatDuration = (hours) => {
@@ -52,4 +49,4 @@ export const formatDuration = (hours) => {
     return `${h} h ${String(m).padStart(2, '0')} min`
 }
 
-export const formatDecimal = (n) => (n == null ? null : Number(n).toLocaleString('fr-FR', { minimumFractionDigits: 1, maximumFractionDigits: 1 }))
+export const formatDecimal = (n, locale = 'fr-FR') => (n == null ? null : Number(n).toLocaleString(locale, { minimumFractionDigits: 1, maximumFractionDigits: 1 }))

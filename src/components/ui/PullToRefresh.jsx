@@ -1,7 +1,9 @@
 import React, { useRef, useState, useEffect } from 'react'
 import { HiArrowPath, HiArrowDown } from 'react-icons/hi2'
+import { useSettings } from '../../context/SettingsContext'
 
 export default function PullToRefresh({ onRefresh, isRefreshing, children }) {
+    const { t } = useSettings()
     const [pullY, setPullY] = useState(0)
     const [isPulling, setIsPulling] = useState(false)
     const [activeRefresh, setActiveRefresh] = useState(false)
@@ -23,8 +25,6 @@ export default function PullToRefresh({ onRefresh, isRefreshing, children }) {
     }, [isRefreshing])
 
     const handleTouchStart = (e) => {
-        // Simple and robust check: if it's a touch event, it's a touch interaction.
-        // We only care if we are at the top and not already refreshing.
         if (window.scrollY <= 1 && !isRefreshing) {
             touchStartY.current = e.touches[0].clientY
             setIsPulling(true)
@@ -39,12 +39,10 @@ export default function PullToRefresh({ onRefresh, isRefreshing, children }) {
         const diff = currentY - touchStartY.current
 
         if (diff > 0 && window.scrollY <= 1) {
-            // Prevent scrolling while pulling
             if (e.cancelable) e.preventDefault()
             const dampedDiff = Math.pow(diff, 0.8)
             setPullY(Math.min(dampedDiff, 150))
         } else {
-            // If we scroll down, cancel pull
             setIsPulling(false)
             setPullY(0)
         }
@@ -68,20 +66,9 @@ export default function PullToRefresh({ onRefresh, isRefreshing, children }) {
         setPullY(0)
     }
 
-    // Stable Rotation Logic:
-    // Only rotate if we are past a minimal movement to avoid jitter at 0.
-    // Full 180deg flip happens at THRESHOLD.
-    // We stay at 180deg once passed threshold to indicate "Release to refresh".
     const progress = Math.min(pullY / THRESHOLD, 1)
-    const rotation = progress * 180 // 0 to 180 degrees
+    const rotation = progress * 180
     const isTriggered = pullY > THRESHOLD
-
-    // Show spinner logic: 
-    // - Visible if pulling
-    // - Visible if this component triggered the refresh (activeRefresh)
-    // - Hidden purely on desktop interactions (mouse) because touch events won't fire.
-    //   But to be safe, the spinner is CSS-hidden on `lg:` screens as per user request.
-    const showSpinner = isPulling || (isRefreshing && activeRefresh)
 
     return (
         <div
@@ -115,7 +102,7 @@ export default function PullToRefresh({ onRefresh, isRefreshing, children }) {
                         />
                     )}
                     <span className="text-xs">
-                        {isRefreshing ? 'Mise à jour...' : (isTriggered ? 'Relâcher pour actualiser' : 'Tirer ou appuyer pour actualiser')}
+                        {isRefreshing ? t('app.refreshing') : (isTriggered ? t('app.releaseToRefresh') : t('app.pullToRefresh'))}
                     </span>
                 </div>
             </button>
@@ -129,7 +116,7 @@ export default function PullToRefresh({ onRefresh, isRefreshing, children }) {
                 >
                     <HiArrowPath className={`text-sm ${isRefreshing ? 'animate-spin' : ''}`} />
                     <span className="font-medium">
-                        {isRefreshing ? 'Mise à jour...' : 'Actualiser'}
+                        {isRefreshing ? t('app.refreshing') : t('app.refresh')}
                     </span>
                 </button>
             </div>

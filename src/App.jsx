@@ -1,17 +1,21 @@
 import React, { useEffect, useMemo, useState } from 'react'
 import { ThemeProvider } from './context/ThemeContext'
+import { SettingsProvider, useSettings } from './context/SettingsContext'
+import { detectBrowserLanguage } from './utils/i18n'
 import ThemeToggle from './components/ThemeToggle'
 import WeatherCard from './components/WeatherCard'
 import WeatherChart from './components/WeatherChart'
 import PrecipitationCard from './components/PrecipitationCard'
 import WindCard from './components/WindCard'
 import SunMoonCard from './components/SunMoonCard'
+import SettingsPage from './components/SettingsPage'
 
 import { fetchCurrentObservation, fetchHourly, fetchHourly7Day, fetchSunTimes, fetchPrecipHistoryDays, fetchMoonInfo, getNextMoonPhases } from './api/weather.js'
 import { formatDateTime, formatDecimal, formatDuration } from './utils/formatters'
 import heroCover from '/header.jpeg'
 import PullToRefresh from './components/ui/PullToRefresh'
 import { HiCheck } from 'react-icons/hi2'
+import { FiSettings } from 'react-icons/fi'
 
 function useInstallPrompt() {
   const [deferredPrompt, setDeferredPrompt] = useState(null)
@@ -58,11 +62,12 @@ function getParisStartOfDay(date) {
 }
 
 function SuccessToast({ visible }) {
+  const { t } = useSettings()
   return (
     <div className={`fixed top-4 left-1/2 -translate-x-1/2 z-[70] transition-all duration-300 pointer-events-none ${visible ? 'opacity-100 translate-y-0' : 'opacity-0 -translate-y-4'}`}>
       <div className="flex items-center gap-2 px-4 py-2 rounded-full shadow-lg bg-green-500 text-white font-medium text-sm backdrop-blur-md">
         <HiCheck className="text-lg" />
-        <span>Mis à jour !</span>
+        <span>{t('app.updated')}</span>
       </div>
     </div>
   )
@@ -71,12 +76,17 @@ function SuccessToast({ visible }) {
 export default function App() {
   return (
     <ThemeProvider>
-      <AppContent />
+      <SettingsProvider>
+        <AppContent />
+      </SettingsProvider>
     </ThemeProvider>
   )
 }
 
 function AppContent() {
+  const [currentPage, setCurrentPage] = useState('home') // 'home' | 'settings'
+  const { settings, t } = useSettings()
+  const locale = settings.language === 'auto' ? detectBrowserLanguage() : (settings.language === 'en' ? 'en-US' : 'fr-FR')
   const [current, setCurrent] = useState(null)
   const [hourly, setHourly] = useState([])
   const [sun, setSun] = useState(null)
@@ -227,7 +237,7 @@ function AppContent() {
 
     } catch (e) {
       console.error(e)
-      setError(e.message || 'Erreur inconnue')
+      setError(e.message || t('app.unknownError'))
     } finally {
       setLoading(false)
       setRainLoading(false)
@@ -332,7 +342,7 @@ function AppContent() {
     if (!sun?.sunrise || !sun?.sunset) {
       return {
         progressPct: 0,
-        label: 'Nuit',
+        label: t('sun.night'),
         tone: 'bg-card-alt text-text-secondary border border-border',
         lengthLabel: '—',
       }
@@ -351,35 +361,35 @@ function AppContent() {
     const lengthLabel = isFinite(totalHours) ? `${hours}h${String(minutes).padStart(2, '0')}` : '—'
 
     // Get current hour in Paris timezone for proper label
-    const parisHour = parseInt(now.toLocaleTimeString('fr-FR', { hour: '2-digit', hour12: false, timeZone: 'Europe/Paris' }), 10)
+    const parisHour = parseInt(now.toLocaleTimeString(locale, { hour: '2-digit', hour12: false, timeZone: 'Europe/Paris' }), 10)
 
-    let label = 'Nuit'
+    let label = t('sun.night')
     let tone = 'bg-card-alt text-text-secondary border border-border'
 
     if (now < sunrise) {
       // Before sunrise
-      label = 'Avant lever'
+      label = t('sun.beforeSunrise')
       tone = 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 border border-slate-200 dark:border-slate-700'
     } else if (now >= sunset) {
       // After sunset
-      label = 'Nuit'
+      label = t('sun.night')
       tone = 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 border border-slate-200 dark:border-slate-700'
     } else if (parisHour < 12) {
       // Morning (before noon)
-      label = 'Matin'
+      label = t('sun.morning')
       tone = 'bg-sky-100 dark:bg-sky-900/30 text-sky-700 dark:text-sky-300 border border-sky-200 dark:border-sky-800'
     } else if (parisHour < 17) {
       // Afternoon (12h - 17h)
-      label = 'Après-midi'
+      label = t('sun.afternoon')
       tone = 'bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300 border border-amber-200 dark:border-amber-800'
     } else {
       // Evening (17h until sunset)
-      label = 'Soir'
+      label = t('sun.evening')
       tone = 'bg-rose-100 dark:bg-rose-900/30 text-rose-700 dark:text-rose-300 border border-rose-200 dark:border-rose-800'
     }
 
     return { progressPct: Math.min(Math.max(progressPct, 0), 100), label, tone, lengthLabel }
-  }, [sun])
+  }, [sun, t])
 
   const moonNextPhases = useMemo(() => getNextMoonPhases(new Date()), [moon])
   const moonCycle = useMemo(() => {
@@ -387,9 +397,9 @@ function AppContent() {
     if (raw == null || Number.isNaN(raw)) return { progressPct: null, label: null }
     const normalized = raw <= 1 ? (raw * 360) : ((raw % 360) + 360) % 360
     const progressPct = (normalized / 360) * 100
-    const label = normalized < 180 ? 'Croissante' : 'Décroissante'
+    const label = normalized < 180 ? t('moon.waxing') : t('moon.waning')
     return { progressPct, label }
-  }, [moon])
+  }, [moon, t])
 
   // Precipitation aggregates
   const precipAgg = useMemo(() => {
@@ -440,23 +450,23 @@ function AppContent() {
   const isRaining = ((Number(current?.precip1h) || 0) > 0) || ((Number(lastHourlyPoint?.precip) || 0) > 0)
   const eventDurationHours = precipAgg.eventHours || 0
   const statusDescription = !hasHourlyData
-    ? 'Données radar en cours de chargement.'
+    ? t('chart.loading')
     : isRaining
       ? (eventDurationHours > 0.1
-        ? `Événement actif depuis ${formatDuration(eventDurationHours)}.`
-        : 'Pluie détectée sur les dernières observations.')
-      : 'Aucune pluie observée récemment.'
+        ? `${t('precip.activeEvent')} ${formatDuration(eventDurationHours)}.`
+        : t('precip.status.detected'))
+      : t('precip.status.noRainDesc')
   const lastRadarLabel = lastHourlyPoint?.ts
-    ? new Date(lastHourlyPoint.ts).toLocaleString('fr-FR', { hour: '2-digit', minute: '2-digit', timeZone: 'Europe/Paris' })
+    ? new Date(lastHourlyPoint.ts).toLocaleString(locale, { hour: '2-digit', minute: '2-digit', timeZone: 'Europe/Paris' })
     : null
   const precipStatusCard = useMemo(() => {
     const base = {
       variant: isRaining ? 'wet' : 'dry',
-      title: isRaining ? 'PRÉCIPITATIONS EN COURS' : 'PRÉCIPITATIONS',
-      headline: isRaining ? 'Pluie en cours 🌧️' : 'Pas de pluie en cours',
+      title: isRaining ? t('precip.ongoing') : t('precip.title'),
+      headline: isRaining ? t('precip.status.wet') + ' 🌧️' : t('precip.status.dry'),
       description: statusDescription,
       lastRadar: lastRadarLabel,
-      rateValue: displayPrecipRate != null ? formatDecimal(displayPrecipRate) : null,
+      rateValue: displayPrecipRate != null ? formatDecimal(displayPrecipRate, locale) : null,
       rateUnit: displayPrecipRate != null ? 'mm/h' : null,
       metrics: [],
     }
@@ -464,51 +474,51 @@ function AppContent() {
     if (!isRaining) return base
 
     const durationLabel = formatDuration(eventDurationHours)
-    const eventTotal = formatDecimal(precipAgg.eventSum) ?? '0,0'
+    const eventTotal = formatDecimal(precipAgg.eventSum, locale) ?? (locale === 'en-US' ? '0.0' : '0,0')
 
     return {
       ...base,
       metrics: [
         {
           id: 'duration',
-          label: "Durée de l'événement",
+          label: t('precip.eventDuration'),
           value: durationLabel,
-          helper: 'Depuis la détection des premières gouttes',
+          helper: t('precip.eventDurationHelper') || 'Depuis la détection des premières gouttes',
         },
         {
           id: 'total',
-          label: 'Cumul depuis le début',
+          label: t('precip.eventTotal'),
           value: eventTotal,
           unit: 'mm',
-          helper: 'Accumulation sur cet épisode',
+          helper: t('precip.eventTotalHelper') || 'Accumulation sur cet épisode',
         },
       ],
     }
-  }, [isRaining, statusDescription, lastRadarLabel, displayPrecipRate, eventDurationHours, precipAgg.eventSum])
+  }, [isRaining, statusDescription, lastRadarLabel, displayPrecipRate, eventDurationHours, precipAgg.eventSum, t])
 
   const rainSummaryCards = useMemo(() => {
-    const todayValue = hasHourlyData ? formatDecimal(precipAgg.last24) : null
+    const todayValue = hasHourlyData ? formatDecimal(precipAgg.last24, locale) : null
     return [
       {
         key: 'today',
-        badge: "CUMUL AUJOURD'HUI",
+        badge: t('precip.cumToday'),
         value: todayValue,
-        helper: 'Somme observée depuis 00h locale.',
+        helper: t('precip.sinceMidnight'),
       },
       {
         key: '7d',
-        badge: 'CUMUL 7 JOURS',
-        value: rain7d == null ? null : formatDecimal(rain7d),
-        helper: 'Accumulation totale sur les 7 derniers jours.',
+        badge: t('precip.cum7d'),
+        value: rain7d != null ? formatDecimal(rain7d) : null,
+        helper: t('precip.last7days'),
       },
       {
         key: '30d',
-        badge: 'CUMUL 30 JOURS',
-        value: rain30d == null ? null : formatDecimal(rain30d),
-        helper: 'Somme constatée sur les 30 derniers jours.',
+        badge: t('precip.cum30d'),
+        value: rain30d != null ? formatDecimal(rain30d) : null,
+        helper: t('precip.last30days'),
       },
     ]
-  }, [hasHourlyData, precipAgg.last24, rain7d, rain30d])
+  }, [precipAgg, hasHourlyData, rain7d, rain30d, t])
 
   const chartData = useMemo(() => {
     if (chartRange === 'day') return hourly
@@ -524,6 +534,11 @@ function AppContent() {
   }, [chartRange, rainLoading, dailyHistory, loading, hourly7d, hourly])
 
   const chartErrorMessage = chartRange === '30d' ? dailyHistoryError : null
+
+  // Render settings page if on settings
+  if (currentPage === 'settings') {
+    return <SettingsPage onBack={() => setCurrentPage('home')} />
+  }
 
   return (
     <div className="min-h-screen bg-bg text-text transition-colors duration-300">
@@ -542,7 +557,7 @@ function AppContent() {
               <div>
                 <h1 className="text-2xl font-semibold text-white sm:text-3xl">Le Barobiou</h1>
                 <div className="mt-1 flex items-center gap-2 text-xs font-medium text-white/60">
-                  <span>{formatDateTime(lastUpdate)}</span>
+                  <span>{t('app.lastUpdate')} : {formatDateTime(lastUpdate, locale)}</span>
                 </div>
               </div>
 
@@ -552,7 +567,7 @@ function AppContent() {
                     onClick={promptInstall}
                     className="hidden sm:block rounded-full bg-white/20 px-4 py-1.5 text-xs font-medium text-white backdrop-blur-md transition hover:bg-white/30"
                   >
-                    Installer
+                    {t('app.install')}
                   </button>
                 )}
               </div>
@@ -571,94 +586,117 @@ function AppContent() {
             </div>
           )}
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-            <WeatherCard
-              type="temperature"
-              title="Température"
-              value={current?.temp ?? null}
-              unit="°C"
-              trendDiff={metricTrends.temp?.diff ?? null}
-              trendUnit="°C"
-              trendLabel="sur 1h"
-              minValue={metricExtremes.temp?.minValue}
-              minTime={metricExtremes.temp?.minTime}
-              maxValue={metricExtremes.temp?.maxValue}
-              maxTime={metricExtremes.temp?.maxTime}
-            />
-            <WeatherCard
-              type="humidity"
-              title="Humidité"
-              value={current?.humidity}
-              unit="%"
-              trendDiff={metricTrends.humidity?.diff ?? null}
-              trendUnit="%"
-              trendLabel="sur 1h"
-              minValue={metricExtremes.humidity?.minValue}
-              minTime={metricExtremes.humidity?.minTime}
-              maxValue={metricExtremes.humidity?.maxValue}
-              maxTime={metricExtremes.humidity?.maxTime}
-            />
-            <WeatherCard
-              type="pressure"
-              title="Pression"
-              value={current?.pressure ?? null}
-              unit="hPa"
-              trendDiff={metricTrends.pressure?.diff ?? null}
-              trendUnit="hPa"
-              trendLabel="sur 1h"
-              minValue={metricExtremes.pressure?.minValue}
-              minTime={metricExtremes.pressure?.minTime}
-              maxValue={metricExtremes.pressure?.maxValue}
-              maxTime={metricExtremes.pressure?.maxTime}
-            />
+          {settings.blocs.weatherCards && (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+              <WeatherCard
+                type="temperature"
+                title={t('weather.temperature')}
+                value={current?.temp ?? null}
+                unit="°C"
+                trendDiff={metricTrends.temp?.diff ?? null}
+                trendUnit="°C"
+                trendLabel={t('weather.trend')}
+                minValue={metricExtremes.temp?.minValue}
+                minTime={metricExtremes.temp?.minTime}
+                maxValue={metricExtremes.temp?.maxValue}
+                maxTime={metricExtremes.temp?.maxTime}
+              />
+              <WeatherCard
+                type="humidity"
+                title={t('weather.humidity')}
+                value={current?.humidity}
+                unit="%"
+                trendDiff={metricTrends.humidity?.diff ?? null}
+                trendUnit="%"
+                trendLabel={t('weather.trend')}
+                minValue={metricExtremes.humidity?.minValue}
+                minTime={metricExtremes.humidity?.minTime}
+                maxValue={metricExtremes.humidity?.maxValue}
+                maxTime={metricExtremes.humidity?.maxTime}
+              />
+              <WeatherCard
+                type="pressure"
+                title={t('weather.pressure')}
+                value={current?.pressure ?? null}
+                unit="hPa"
+                trendDiff={metricTrends.pressure?.diff ?? null}
+                trendUnit="hPa"
+                trendLabel={t('weather.trend')}
+                minValue={metricExtremes.pressure?.minValue}
+                minTime={metricExtremes.pressure?.minTime}
+                maxValue={metricExtremes.pressure?.maxValue}
+                maxTime={metricExtremes.pressure?.maxTime}
+              />
+            </div>
+          )}
 
-            <PrecipitationCard
-              loading={rainLoading}
-              statusCard={precipStatusCard}
-              summaryCards={rainSummaryCards}
-            />
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mt-4">
+            {settings.blocs.precipitation && (
+              <PrecipitationCard
+                loading={rainLoading}
+                statusCard={precipStatusCard}
+                summaryCards={rainSummaryCards}
+              />
+            )}
 
-            <WindCard
-              current={current}
-              windExtra={windExtra}
-              gustToday={gustToday}
-              gust7d={gust7d}
-              gust30d={gust30d}
-            />
+            {settings.blocs.wind && (
+              <WindCard
+                current={current}
+                windExtra={windExtra}
+                gustToday={gustToday}
+                gust7d={gust7d}
+                gust30d={gust30d}
+              />
+            )}
 
-            <SunMoonCard
-              sun={sun}
-              sunSummary={sunSummary}
-              sunTomorrow={sunTomorrow}
-              moon={moon}
-              moonCycle={moonCycle}
-              moonNextPhases={moonNextPhases}
-            />
+            {settings.blocs.sunMoon && (
+              <SunMoonCard
+                sun={sun}
+                sunSummary={sunSummary}
+                sunTomorrow={sunTomorrow}
+                moon={moon}
+                moonCycle={moonCycle}
+                moonNextPhases={moonNextPhases}
+              />
+            )}
           </div>
 
 
 
-          <div className="mt-6">
-            <WeatherChart
-              data={chartData}
-              range={chartRange}
-              onRangeChange={setChartRange}
-              loading={chartIsLoading}
-              error={chartErrorMessage}
-            />
-          </div>
+          {settings.blocs.chart && (
+            <div className="mt-6">
+              <WeatherChart
+                data={chartData}
+                range={chartRange}
+                onRangeChange={setChartRange}
+                loading={chartIsLoading}
+                error={chartErrorMessage}
+                chartSettings={settings.chart}
+              />
+            </div>
+          )}
 
           {loading && (
             <div className="fixed bottom-20 left-1/2 -translate-x-1/2 px-4 py-2 rounded-full bg-slate-900/80 dark:bg-white/10 text-white text-sm backdrop-blur-md shadow-lg border border-white/10 z-50">
-              Chargement...
+              {t('app.loading')}
             </div>
           )}
         </main>
       </PullToRefresh>
 
       <footer className="mx-auto container-max px-4 py-8 flex flex-col items-center gap-6">
-        <ThemeToggle />
-        <p className="text-center text-xs text-text-muted">Données via Weather Underground — © {new Date().getFullYear()}</p>
+        <div className="flex items-center gap-4">
+          <ThemeToggle />
+          <button
+            onClick={() => setCurrentPage('settings')}
+            className="h-10 flex items-center gap-2 px-5 rounded-full bg-card hover:bg-card-alt text-text transition-all shadow-sm border border-border active:scale-95"
+            aria-label={t('settings.title')}
+          >
+            <FiSettings size={18} className="text-text-secondary" />
+            <span className="text-xs font-medium">{t('settings.title')}</span>
+          </button>
+        </div>
+        <p className="text-center text-xs text-text-muted">{t('app.footer')} — © {new Date().getFullYear()}</p>
       </footer>
       <SuccessToast visible={showSuccessToast} />
     </div>

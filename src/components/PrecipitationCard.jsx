@@ -1,15 +1,18 @@
 import React from 'react';
 import RadarMap from './RadarMap';
+import { useSettings } from '../context/SettingsContext';
 
 const PrecipitationCard = ({ loading, statusCard, summaryCards }) => {
+    const { t } = useSettings();
+
     return (
         <div className="rounded-2xl bg-card p-4 shadow-soft sm:p-5 sm:col-span-2 lg:col-span-3">
             <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
-                <div className="text-sm font-medium text-text-secondary">Précipitations</div>
+                <div className="text-sm font-medium text-text-secondary">{t('precip.title')}</div>
                 <div className="flex items-center gap-2 text-xs text-text-muted">
                     {loading && (
                         <span className="rounded-full border border-border bg-card-alt px-2 py-0.5 text-[11px] uppercase tracking-wide">
-                            Mise à jour…
+                            {t('app.updating')}
                         </span>
                     )}
                 </div>
@@ -100,7 +103,7 @@ const PrecipitationCard = ({ loading, statusCard, summaryCards }) => {
                                     className={`text-xs ${statusCard.variant === 'wet' ? 'text-white/70' : 'text-text-muted'
                                         }`}
                                 >
-                                    Dernière mesure radar à {statusCard.lastRadar}
+                                    {t('precip.last_update')} {statusCard.lastRadar}
                                 </div>
                             )}
                         </div>
@@ -116,14 +119,14 @@ const PrecipitationCard = ({ loading, statusCard, summaryCards }) => {
                                         {badge}
                                     </span>
                                     {key !== 'today' && loading && (
-                                        <span className="text-[10px] uppercase tracking-wide text-text-muted">Mise à jour…</span>
+                                        <span className="text-[10px] uppercase tracking-wide text-text-muted">{t('app.updating')}</span>
                                     )}
                                 </div>
 
                                 <div className="flex flex-col items-start gap-1 pt-2">
                                     <div className="flex items-baseline gap-1 text-3xl font-semibold text-text">
                                         <span>{value ?? '—'}</span>
-                                        {value != null && <span className="text-base font-medium text-text-muted">mm</span>}
+                                        {value != null && <span className="text-base font-medium text-text-muted">{t('precip.mm')}</span>}
                                     </div>
                                 </div>
 
@@ -139,8 +142,8 @@ const PrecipitationCard = ({ loading, statusCard, summaryCards }) => {
 
                 <section className="overflow-hidden rounded-2xl border border-border bg-card">
                     <div className="flex items-center justify-between border-b border-border px-4 py-3 text-xs text-text-secondary">
-                        <span className="uppercase tracking-wide">Radar de précipitations</span>
-                        <span className="text-text-muted">Source RainViewer</span>
+                        <span className="uppercase tracking-wide">{t('precip.radar_title')}</span>
+                        <span className="text-text-muted">{t('precip.source')}</span>
                     </div>
                     <RadarMap embedded />
                 </section>

@@ -1,17 +1,13 @@
-import React, { useEffect, useState, useRef } from 'react'
+import React, { useEffect, useState, useRef, useMemo } from 'react'
 import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet'
 import { useTheme } from '../context/ThemeContext'
+import { useSettings } from '../context/SettingsContext'
 import { HiPlay, HiPause, HiBolt } from 'react-icons/hi2'
 import SwipeableTabs from './ui/SwipeableTabs'
 
-const SPEED_OPTIONS = [
-    { label: 'Lent', value: 600 },
-    { label: 'Normal', value: 400 },
-    { label: 'Rapide', value: 200 },
-]
-
 export default function RadarMap({ embedded = false } = {}) {
     const { isDark } = useTheme()
+    const { t } = useSettings()
     const [frames, setFrames] = useState([])
     const [currentFrameIndex, setCurrentFrameIndex] = useState(0)
     const [isPlaying, setIsPlaying] = useState(true)
@@ -20,6 +16,12 @@ export default function RadarMap({ embedded = false } = {}) {
     const timelineRef = useRef(null)
     const intervalRef = useRef(null)
     const touchStartXRef = useRef(null)
+
+    const speedOptions = useMemo(() => [
+        { label: t('radar.speed.slow'), value: 600 },
+        { label: t('radar.speed.normal'), value: 400 },
+        { label: t('radar.speed.fast'), value: 200 },
+    ], [t])
 
     const formatTimeLabel = (date) => {
         const hours = date.getHours().toString().padStart(2, '0')
@@ -262,7 +264,7 @@ export default function RadarMap({ embedded = false } = {}) {
 
                 {!hasFrames && (
                     <div className="text-center text-xs text-text-muted mt-2">
-                        Chargement des observations radar…
+                        {t('radar.loading')}
                     </div>
                 )}
 
@@ -280,7 +282,7 @@ export default function RadarMap({ embedded = false } = {}) {
                     {/* Swipeable Speed Selector */}
                     <div className="flex-1 max-w-[280px]">
                         <SwipeableTabs
-                            options={SPEED_OPTIONS}
+                            options={speedOptions}
                             value={speed}
                             onChange={setSpeed}
                             className="h-10 rounded-full border border-border bg-card shadow-sm p-1"
@@ -299,7 +301,7 @@ export default function RadarMap({ embedded = false } = {}) {
                         title="Afficher/Masquer les éclairs"
                     >
                         <HiBolt className={`text-lg ${showLightning ? 'fill-current' : ''}`} />
-                        <span className="hidden sm:inline text-xs font-medium">Éclairs</span>
+                        <span className="hidden sm:inline text-xs font-medium">{t('radar.lightning')}</span>
                     </button>
                 </div>
             </div>

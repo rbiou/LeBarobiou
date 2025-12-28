@@ -1,16 +1,31 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { WiSunrise, WiSunset, WiMoonAltFull } from 'react-icons/wi';
 import { formatClock, formatDateLabel, formatDaysUntil } from '../utils/formatters';
+import { useSettings } from '../context/SettingsContext';
+import { detectBrowserLanguage } from '../utils/i18n';
 
 const SunMoonCard = ({ sun, sunSummary, sunTomorrow, moon, moonCycle, moonNextPhases }) => {
+    const { settings, t } = useSettings();
+    const locale = settings.language === 'auto' ? detectBrowserLanguage() : (settings.language === 'en' ? 'en-US' : 'fr-FR')
+
+    const sunSummaryText = sun?.sunrise && sun?.sunset && sunTomorrow?.sunrise
+        ? t('sun.summary')
+            .replace('{rise}', formatClock(sun.sunrise, locale))
+            .replace('{set}', formatClock(sun.sunset, locale))
+            .replace('{tomorrow_rise}', formatClock(sunTomorrow.sunrise, locale))
+        : '';
+
     return (
         <div className="rounded-2xl bg-card p-4 shadow-soft sm:p-6 sm:col-span-2 lg:col-span-3">
             <div className="flex flex-col gap-4">
                 <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
-                    <div className="text-sm font-medium text-text-secondary">Soleil & Lune</div>
+                    <div className="text-sm font-medium text-text-secondary">{t('sun.title')}</div>
                     {sun?.sunrise && sun?.sunset ? (
                         <div className="text-xs text-text-muted">
-                            {`Aujourd’hui : ${formatClock(sun.sunrise)} → ${formatClock(sun.sunset)}`}
+                            {t('sun.today_range')
+                                .replace('{start}', formatClock(sun.sunrise, locale))
+                                .replace('{end}', formatClock(sun.sunset, locale))
+                            }
                         </div>
                     ) : null}
                 </div>
@@ -19,9 +34,9 @@ const SunMoonCard = ({ sun, sunSummary, sunTomorrow, moon, moonCycle, moonNextPh
                     {/* Sun Section */}
                     <section className="flex flex-col gap-5 rounded-2xl border border-border bg-card-alt p-4">
                         <div className="flex items-center justify-between">
-                            <span className="text-xs uppercase tracking-wide text-text-muted">Soleil</span>
+                            <span className="text-xs uppercase tracking-wide text-text-muted">{t('sun.sun_title')}</span>
                             {sun?.sunrise && sun?.sunset ? (
-                                <span className="text-xs text-text-muted">Durée {sunSummary.lengthLabel}</span>
+                                <span className="text-xs text-text-muted">{t('sun.duration')} {sunSummary.lengthLabel}</span>
                             ) : null}
                         </div>
 
@@ -33,8 +48,8 @@ const SunMoonCard = ({ sun, sunSummary, sunTomorrow, moon, moonCycle, moonNextPh
                                             <WiSunrise className="text-2xl" />
                                         </div>
                                         <div>
-                                            <div className="text-[11px] uppercase tracking-wide text-amber-600 dark:text-amber-400">Lever</div>
-                                            <div className="text-base font-semibold text-text">{formatClock(sun.sunrise)}</div>
+                                            <div className="text-[11px] uppercase tracking-wide text-amber-600 dark:text-amber-400">{t('sun.rise')}</div>
+                                            <div className="text-base font-semibold text-text">{formatClock(sun.sunrise, locale)}</div>
                                         </div>
                                     </div>
                                     <div className="flex h-full min-h-[140px] items-center gap-4 rounded-2xl bg-rose-50 dark:bg-rose-500/10 px-4 py-6">
@@ -42,8 +57,8 @@ const SunMoonCard = ({ sun, sunSummary, sunTomorrow, moon, moonCycle, moonNextPh
                                             <WiSunset className="text-2xl" />
                                         </div>
                                         <div>
-                                            <div className="text-[11px] uppercase tracking-wide text-rose-600 dark:text-rose-400">Coucher</div>
-                                            <div className="text-base font-semibold text-text">{formatClock(sun.sunset)}</div>
+                                            <div className="text-[11px] uppercase tracking-wide text-rose-600 dark:text-rose-400">{t('sun.set')}</div>
+                                            <div className="text-base font-semibold text-text">{formatClock(sun.sunset, locale)}</div>
                                         </div>
                                     </div>
                                 </div>
@@ -51,7 +66,7 @@ const SunMoonCard = ({ sun, sunSummary, sunTomorrow, moon, moonCycle, moonNextPh
                                 <div className="flex flex-col gap-3">
                                     {/* Progress bar with times */}
                                     <div className="flex items-center gap-2 text-xs text-text-muted">
-                                        <span className="font-medium">{formatClock(sun.sunrise)}</span>
+                                        <span className="font-medium">{formatClock(sun.sunrise, locale)}</span>
                                         <div className="relative flex-1 h-2.5 overflow-hidden rounded-full bg-gradient-to-r from-amber-100 via-sky-100 to-rose-100 dark:from-amber-900/30 dark:via-sky-900/30 dark:to-rose-900/30">
                                             <div
                                                 className="absolute inset-y-0 left-0 rounded-full bg-gradient-to-r from-amber-400 via-sky-400 to-rose-400 transition-all duration-500 ease-out"
@@ -62,50 +77,50 @@ const SunMoonCard = ({ sun, sunSummary, sunTomorrow, moon, moonCycle, moonNextPh
                                                 style={{ left: `${sunSummary.progressPct}%` }}
                                             />
                                         </div>
-                                        <span className="font-medium">{formatClock(sun.sunset)}</span>
+                                        <span className="font-medium">{formatClock(sun.sunset, locale)}</span>
                                     </div>
                                     {/* Status row */}
                                     <div className="flex flex-wrap items-center justify-between gap-2">
                                         <span className={`rounded-full px-2.5 py-1 ${sunSummary.tone} text-xs font-medium`}>{sunSummary.label}</span>
                                         {sunTomorrow?.sunrise ? (
                                             <span className="text-xs text-text-muted">
-                                                Demain : {formatClock(sunTomorrow.sunrise)}
+                                                {t('sun.tomorrow')} : {formatClock(sunTomorrow.sunrise, locale)}
                                             </span>
                                         ) : null}
                                     </div>
                                 </div>
 
                                 <div className="text-sm text-text-secondary">
-                                    {`Le soleil s’est levé aujourd’hui à ${formatClock(sun.sunrise)}, se couchera à ${formatClock(sun.sunset)}, et se lèvera demain à ${formatClock(sunTomorrow?.sunrise)}.`}
+                                    {sunSummaryText}
                                 </div>
                             </>
                         ) : (
-                            <div className="text-sm text-text-muted">Informations solaires indisponibles.</div>
+                            <div className="text-sm text-text-muted">{t('sun.unavailable')}</div>
                         )}
                     </section>
 
                     {/* Moon Section */}
                     <section className="flex flex-col gap-5 rounded-2xl border border-border bg-card-alt p-4">
                         <div className="flex items-center justify-between">
-                            <span className="text-xs uppercase tracking-wide text-text-muted">Lune</span>
-                            <span className="text-xs text-text-muted">{formatDateLabel(new Date())}</span>
+                            <span className="text-xs uppercase tracking-wide text-text-muted">{t('moon.moon_title')}</span>
+                            <span className="text-xs text-text-muted">{formatDateLabel(new Date(), locale)}</span>
                         </div>
 
                         <div className="grid grid-cols-1 gap-3 text-sm sm:grid-cols-2 sm:items-stretch">
                             <div className="flex h-full min-h-[140px] items-center gap-4 rounded-2xl bg-indigo-50 dark:bg-indigo-500/10 px-4 py-6">
                                 <div className="flex h-12 w-12 items-center justify-center rounded-full bg-white dark:bg-indigo-500/20 text-lg font-semibold text-indigo-600 dark:text-indigo-400 shadow-soft">🌕</div>
                                 <div className="text-left">
-                                    <div className="text-[11px] uppercase tracking-wide text-indigo-600 dark:text-indigo-400">Prochaine pleine lune</div>
-                                    <div className="text-base font-semibold text-text">{formatDateLabel(moonNextPhases.nextFull)}</div>
-                                    <div className="text-[11px] text-indigo-500 dark:text-indigo-300">{formatDaysUntil(moonNextPhases.nextFull)}</div>
+                                    <div className="text-[11px] uppercase tracking-wide text-indigo-600 dark:text-indigo-400">{t('moon.next_full')}</div>
+                                    <div className="text-base font-semibold text-text">{formatDateLabel(moonNextPhases.nextFull, locale)}</div>
+                                    <div className="text-[11px] text-indigo-500 dark:text-indigo-300">{formatDaysUntil(moonNextPhases.nextFull, t)}</div>
                                 </div>
                             </div>
                             <div className="flex h-full min-h-[140px] items-center gap-4 rounded-2xl bg-cyan-50 dark:bg-cyan-500/10 px-4 py-6">
                                 <div className="flex h-12 w-12 items-center justify-center rounded-full bg-white dark:bg-cyan-500/20 text-lg font-semibold text-cyan-600 dark:text-cyan-400 shadow-soft">🌑</div>
                                 <div className="text-left">
-                                    <div className="text-[11px] uppercase tracking-wide text-cyan-600 dark:text-cyan-400">Prochaine nouvelle lune</div>
-                                    <div className="text-base font-semibold text-text">{formatDateLabel(moonNextPhases.nextNew)}</div>
-                                    <div className="text-[11px] text-cyan-500 dark:text-cyan-300">{formatDaysUntil(moonNextPhases.nextNew)}</div>
+                                    <div className="text-[11px] uppercase tracking-wide text-cyan-600 dark:text-cyan-400">{t('moon.next_new')}</div>
+                                    <div className="text-base font-semibold text-text">{formatDateLabel(moonNextPhases.nextNew, locale)}</div>
+                                    <div className="text-[11px] text-cyan-500 dark:text-cyan-300">{formatDaysUntil(moonNextPhases.nextNew, t)}</div>
                                 </div>
                             </div>
                         </div>
@@ -141,7 +156,9 @@ const SunMoonCard = ({ sun, sunSummary, sunTomorrow, moon, moonCycle, moonNextPh
                             <div className="flex h-14 w-14 items-center justify-center rounded-full bg-slate-900 dark:bg-slate-700 text-2xl text-white shadow-inner">
                                 {moon?.phaseEmoji ?? <WiMoonAltFull />}
                             </div>
-                            <div className="text-sm font-semibold text-text">{moon?.phaseName || 'Phase inconnue'}</div>
+                            <div className="text-sm font-semibold text-text">
+                                {moon?.phaseKey ? t(`moon.phase.${moon.phaseKey}`) : (moon?.phaseName || t('moon.phase_unknown'))}
+                            </div>
                         </div>
                     </section>
                 </div>

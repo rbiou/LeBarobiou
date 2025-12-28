@@ -1,6 +1,7 @@
 import React from 'react'
 import { WiHumidity, WiStrongWind, WiBarometer, WiRain, WiThermometer } from 'react-icons/wi'
 import { HiArrowTrendingUp, HiArrowTrendingDown, HiMinus } from 'react-icons/hi2'
+import { useSettings } from '../context/SettingsContext'
 
 const iconMap = {
   temperature: WiThermometer,
@@ -26,17 +27,22 @@ export default function WeatherCard({
   unit,
   trendDiff = null,
   trendUnit,
-  trendLabel = 'sur 1h',
+  trendLabel, // Default handled below via translation
   minValue = null,
   minTime = null,
   maxValue = null,
   maxTime = null,
   children,
 }) {
+  const { t } = useSettings()
+
   const Icon = iconMap[type] || (() => null)
   const formatted = formatOneDecimal(value)
   const hasTrend = trendDiff !== null && trendDiff !== undefined && Number.isFinite(Number(trendDiff))
   const formattedTrend = hasTrend ? formatOneDecimal(Math.abs(trendDiff)) : null
+
+  // Use prop or translation default
+  const effectiveTrendLabel = trendLabel || t('weather.trend')
 
   // Revised Trend Logic: Simple text + icon, no background
   let TrendIcon = HiMinus
@@ -93,14 +99,14 @@ export default function WeatherCard({
               <span>{formattedTrend}</span>
               {trendUnit && <span className="text-xs font-medium opacity-80">{trendUnit}</span>}
             </div>
-            {trendLabel && <div className="text-[10px] text-text-muted">{trendLabel}</div>}
+            {effectiveTrendLabel && <div className="text-[10px] text-text-muted">{effectiveTrendLabel}</div>}
           </div>
         )}
       </div>
 
       <div className="grid grid-cols-2 gap-2 text-sm">
         <div className="rounded-xl border border-border bg-card-alt px-3 py-2">
-          <div className="text-[11px] uppercase tracking-wide text-text-muted">Min jour</div>
+          <div className="text-[11px] uppercase tracking-wide text-text-muted">{t('weather.min')}</div>
           <div className="mt-1 text-base font-semibold text-text">
             {minFormatted !== null ? (
               <span>
@@ -112,11 +118,11 @@ export default function WeatherCard({
             )}
           </div>
           {minTimeFormatted && (
-            <div className="mt-0.5 text-[11px] text-text-muted">à {minTimeFormatted}</div>
+            <div className="mt-0.5 text-[11px] text-text-muted">{t('weather.at')} {minTimeFormatted}</div>
           )}
         </div>
         <div className="rounded-xl border border-border bg-card-alt px-3 py-2">
-          <div className="text-[11px] uppercase tracking-wide text-text-muted">Max jour</div>
+          <div className="text-[11px] uppercase tracking-wide text-text-muted">{t('weather.max')}</div>
           <div className="mt-1 text-base font-semibold text-text">
             {maxFormatted !== null ? (
               <span>
@@ -128,7 +134,7 @@ export default function WeatherCard({
             )}
           </div>
           {maxTimeFormatted && (
-            <div className="mt-0.5 text-[11px] text-text-muted">à {maxTimeFormatted}</div>
+            <div className="mt-0.5 text-[11px] text-text-muted">{t('weather.at')} {maxTimeFormatted}</div>
           )}
         </div>
       </div>

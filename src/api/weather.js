@@ -162,8 +162,8 @@ export async function fetchHourly({ units = 'm' } = {}) {
       ),
     }
   })
-  .filter((d) => d.ts instanceof Date && !isNaN(d.ts))
-  .sort((a, b) => a.ts - b.ts);
+    .filter((d) => d.ts instanceof Date && !isNaN(d.ts))
+    .sort((a, b) => a.ts - b.ts);
 
   // Compute per-interval precipitation from cumulative totals; fallback to rate*time
   let prevCum = null;
@@ -353,62 +353,62 @@ async function fetchPrecipHistoryRange({ startDate, endDate, units = 'm' } = {})
             d.tempHigh,
             d.temperatureHigh
           );
-        const tempLow = pickNumeric(
-          d.metric?.tempLow,
-          d.metric?.temperatureLow,
-          d.tempLow,
-          d.temperatureLow
-        );
-        const pressureMin = pickNumeric(
-          d.metric?.pressureMin,
-          d.metric?.pressureMinAvg,
-          d.pressureMin
-        );
-        const pressureMax = pickNumeric(
-          d.metric?.pressureMax,
-          d.metric?.pressureMaxAvg,
-          d.pressureMax
-        );
-        const humidityAvg = pickNumeric(
-          d.metric?.humidityAvg,
-          d.humidityAvg,
-          d.humidity
-        );
-        const pressureAvg = (pressureMin != null && pressureMax != null)
-          ? (pressureMin + pressureMax) / 2
-          : pickNumeric(
-            d.metric?.pressureAvg,
-            d.metric?.pressureMean,
-          d.metric?.pressure,
-          d.pressureAvg,
-          d.pressure
-        );
-        const gustHigh = pickNumeric(
-          d.metric?.windgustHigh,
-          d.metric?.windgustMax,
-          d.windgustHigh,
-          d.windgustMax,
-          d.imperial?.windgustHigh,
-          d.imperial?.windgustMax
-        );
-        const gustHighTimeRaw =
-          d.windgustHighTime ??
-          d.windgustTimeHigh ??
-          d.obsTimeUtc ??
-          d.valid_time_gmt ??
-          d.epoch ??
-          null;
-        const gustHighTime = (() => {
-          if (gustHighTimeRaw == null) return null;
-          if (typeof gustHighTimeRaw === 'number') return new Date(gustHighTimeRaw * 1000);
-          const candidate = new Date(gustHighTimeRaw);
-          return Number.isNaN(candidate.getTime()) ? null : candidate;
-        })();
-        const ts =
-          (typeof d.obsTimeUtc === 'string' && d.obsTimeUtc) ? new Date(d.obsTimeUtc) :
-          (typeof d.valid_time_gmt === 'number') ? new Date(d.valid_time_gmt * 1000) :
-          (typeof d.epoch === 'number') ? new Date(d.epoch * 1000) :
+          const tempLow = pickNumeric(
+            d.metric?.tempLow,
+            d.metric?.temperatureLow,
+            d.tempLow,
+            d.temperatureLow
+          );
+          const pressureMin = pickNumeric(
+            d.metric?.pressureMin,
+            d.metric?.pressureMinAvg,
+            d.pressureMin
+          );
+          const pressureMax = pickNumeric(
+            d.metric?.pressureMax,
+            d.metric?.pressureMaxAvg,
+            d.pressureMax
+          );
+          const humidityAvg = pickNumeric(
+            d.metric?.humidityAvg,
+            d.humidityAvg,
+            d.humidity
+          );
+          const pressureAvg = (pressureMin != null && pressureMax != null)
+            ? (pressureMin + pressureMax) / 2
+            : pickNumeric(
+              d.metric?.pressureAvg,
+              d.metric?.pressureMean,
+              d.metric?.pressure,
+              d.pressureAvg,
+              d.pressure
+            );
+          const gustHigh = pickNumeric(
+            d.metric?.windgustHigh,
+            d.metric?.windgustMax,
+            d.windgustHigh,
+            d.windgustMax,
+            d.imperial?.windgustHigh,
+            d.imperial?.windgustMax
+          );
+          const gustHighTimeRaw =
+            d.windgustHighTime ??
+            d.windgustTimeHigh ??
+            d.obsTimeUtc ??
+            d.valid_time_gmt ??
+            d.epoch ??
             null;
+          const gustHighTime = (() => {
+            if (gustHighTimeRaw == null) return null;
+            if (typeof gustHighTimeRaw === 'number') return new Date(gustHighTimeRaw * 1000);
+            const candidate = new Date(gustHighTimeRaw);
+            return Number.isNaN(candidate.getTime()) ? null : candidate;
+          })();
+          const ts =
+            (typeof d.obsTimeUtc === 'string' && d.obsTimeUtc) ? new Date(d.obsTimeUtc) :
+              (typeof d.valid_time_gmt === 'number') ? new Date(d.valid_time_gmt * 1000) :
+                (typeof d.epoch === 'number') ? new Date(d.epoch * 1000) :
+                  null;
           const date = ts && !Number.isNaN(ts.getTime()) ? ts : null;
           return {
             date,
@@ -553,26 +553,30 @@ export async function fetchMoonInfo(lat, lon, date = new Date()) {
       const set = src?.moonset?.time || src?.set?.time || null;
       const phaseFracRaw = src?.moonphase ?? NaN;
       const phaseFrac = Number(phaseFracRaw);
-      const phaseName = isNaN(phaseFrac) ? null : (() => {
+      const getPhaseInfo = () => {
+        if (isNaN(phaseFrac)) return { key: null, name: null };
         const angle = phaseFrac % 360;
-        if (angle === 0) return 'Nouvelle lune';
-        if (angle > 0 && angle < 90) return 'Croissant';
-        if (angle === 90) return 'Premier quartier';
-        if (angle > 90 && angle < 180) return 'Presque pleine';
-        if (angle === 180) return 'Pleine lune';
-        if (angle > 180 && angle < 270) return 'Presque nouvelle';
-        if (angle >= 270 && angle < 360) return 'Dernier croissant';
-        return null;
-      })();
+        if (angle === 0) return { key: 'new', name: 'Nouvelle lune' };
+        if (angle > 0 && angle < 90) return { key: 'waxingCrescent', name: 'Croissant' };
+        if (angle === 90) return { key: 'firstQuarter', name: 'Premier quartier' };
+        if (angle > 90 && angle < 180) return { key: 'waxingGibbous', name: 'Presque pleine' };
+        if (angle === 180) return { key: 'full', name: 'Pleine lune' };
+        if (angle > 180 && angle < 270) return { key: 'waningGibbous', name: 'Presque nouvelle' };
+        if (angle >= 270 && angle < 360) return { key: 'waningCrescent', name: 'Dernier croissant' };
+        return { key: null, name: null };
+      };
+
+      const { key: phaseKey, name: phaseName } = getPhaseInfo();
+
       const phaseEmoji = (() => {
-        switch (phaseName) {
-          case 'Nouvelle lune': return '🌑';
-          case 'Croissant': return '🌒';
-          case 'Premier quartier': return '🌓';
-          case 'Presque pleine': return '🌔';
-          case 'Pleine lune': return '🌕';
-          case 'Presque nouvelle': return '🌖';
-          case 'Dernier croissant': return '🌘';
+        switch (phaseKey) {
+          case 'new': return '🌑';
+          case 'waxingCrescent': return '🌒';
+          case 'firstQuarter': return '🌓';
+          case 'waxingGibbous': return '🌔';
+          case 'full': return '🌕';
+          case 'waningGibbous': return '🌖';
+          case 'waningCrescent': return '🌘';
           default: return '';
         }
       })();
@@ -581,6 +585,7 @@ export async function fetchMoonInfo(lat, lon, date = new Date()) {
         moonrise: rise ? new Date(rise) : null,
         moonset: set ? new Date(set) : null,
         phaseName,
+        phaseKey,
         phaseEmoji,
         phaseValue: isNaN(phaseFrac) ? null : phaseFrac,
         illuminated,
@@ -681,7 +686,7 @@ export async function fetchTopGusts24h({ units = 'm' } = {}) {
     try {
       const yj = await resYday.json();
       ydayObs = Array.isArray(yj?.observations) ? yj.observations : [];
-    } catch {}
+    } catch { }
   }
 
   const mapGust = (h) => {
