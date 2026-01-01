@@ -586,95 +586,105 @@ function AppContent() {
             </div>
           )}
 
-          {settings.blocs.weatherCards && (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-              <WeatherCard
-                type="temperature"
-                title={t('weather.temperature')}
-                value={current?.temp ?? null}
-                unit="°C"
-                trendDiff={metricTrends.temp?.diff ?? null}
-                trendUnit="°C"
-                trendLabel={t('weather.trend')}
-                minValue={metricExtremes.temp?.minValue}
-                minTime={metricExtremes.temp?.minTime}
-                maxValue={metricExtremes.temp?.maxValue}
-                maxTime={metricExtremes.temp?.maxTime}
-              />
-              <WeatherCard
-                type="humidity"
-                title={t('weather.humidity')}
-                value={current?.humidity}
-                unit="%"
-                trendDiff={metricTrends.humidity?.diff ?? null}
-                trendUnit="%"
-                trendLabel={t('weather.trend')}
-                minValue={metricExtremes.humidity?.minValue}
-                minTime={metricExtremes.humidity?.minTime}
-                maxValue={metricExtremes.humidity?.maxValue}
-                maxTime={metricExtremes.humidity?.maxTime}
-              />
-              <WeatherCard
-                type="pressure"
-                title={t('weather.pressure')}
-                value={current?.pressure ?? null}
-                unit="hPa"
-                trendDiff={metricTrends.pressure?.diff ?? null}
-                trendUnit="hPa"
-                trendLabel={t('weather.trend')}
-                minValue={metricExtremes.pressure?.minValue}
-                minTime={metricExtremes.pressure?.minTime}
-                maxValue={metricExtremes.pressure?.maxValue}
-                maxTime={metricExtremes.pressure?.maxTime}
-              />
-            </div>
-          )}
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mt-4">
-            {settings.blocs.precipitation && (
-              <PrecipitationCard
-                loading={rainLoading}
-                statusCard={precipStatusCard}
-                summaryCards={rainSummaryCards}
-              />
-            )}
-
-            {settings.blocs.wind && (
-              <WindCard
-                current={current}
-                windExtra={windExtra}
-                gustToday={gustToday}
-                gust7d={gust7d}
-                gust30d={gust30d}
-              />
-            )}
-
-            {settings.blocs.sunMoon && (
-              <SunMoonCard
-                sun={sun}
-                sunSummary={sunSummary}
-                sunTomorrow={sunTomorrow}
-                moon={moon}
-                moonCycle={moonCycle}
-                moonNextPhases={moonNextPhases}
-              />
-            )}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            {(settings.blocOrder || ['weatherCards', 'precipitation', 'wind', 'sunMoon', 'chart']).map(key => {
+              if (key === 'weatherCards' && settings.blocs.weatherCards) {
+                return (
+                  <React.Fragment key={key}>
+                    <WeatherCard
+                      type="temperature"
+                      title={t('weather.temperature')}
+                      value={current?.temp ?? null}
+                      unit="°C"
+                      trendDiff={metricTrends.temp?.diff ?? null}
+                      trendUnit="°C"
+                      trendLabel={t('weather.trend')}
+                      minValue={metricExtremes.temp?.minValue}
+                      minTime={metricExtremes.temp?.minTime}
+                      maxValue={metricExtremes.temp?.maxValue}
+                      maxTime={metricExtremes.temp?.maxTime}
+                    />
+                    <WeatherCard
+                      type="humidity"
+                      title={t('weather.humidity')}
+                      value={current?.humidity}
+                      unit="%"
+                      trendDiff={metricTrends.humidity?.diff ?? null}
+                      trendUnit="%"
+                      trendLabel={t('weather.trend')}
+                      minValue={metricExtremes.humidity?.minValue}
+                      minTime={metricExtremes.humidity?.minTime}
+                      maxValue={metricExtremes.humidity?.maxValue}
+                      maxTime={metricExtremes.humidity?.maxTime}
+                    />
+                    <WeatherCard
+                      type="pressure"
+                      title={t('weather.pressure')}
+                      value={current?.pressure ?? null}
+                      unit="hPa"
+                      trendDiff={metricTrends.pressure?.diff ?? null}
+                      trendUnit="hPa"
+                      trendLabel={t('weather.trend')}
+                      minValue={metricExtremes.pressure?.minValue}
+                      minTime={metricExtremes.pressure?.minTime}
+                      maxValue={metricExtremes.pressure?.maxValue}
+                      maxTime={metricExtremes.pressure?.maxTime}
+                    />
+                  </React.Fragment>
+                )
+              }
+              if (key === 'precipitation' && settings.blocs.precipitation) {
+                return (
+                  <PrecipitationCard
+                    key={key}
+                    loading={rainLoading}
+                    statusCard={precipStatusCard}
+                    summaryCards={rainSummaryCards}
+                  />
+                )
+              }
+              if (key === 'wind' && settings.blocs.wind) {
+                return (
+                  <WindCard
+                    key={key}
+                    current={current}
+                    windExtra={windExtra}
+                    gustToday={gustToday}
+                    gust7d={gust7d}
+                    gust30d={gust30d}
+                  />
+                )
+              }
+              if (key === 'sunMoon' && settings.blocs.sunMoon) {
+                return (
+                  <SunMoonCard
+                    key={key}
+                    sun={sun}
+                    sunSummary={sunSummary}
+                    sunTomorrow={sunTomorrow}
+                    moon={moon}
+                    moonCycle={moonCycle}
+                    moonNextPhases={moonNextPhases}
+                  />
+                )
+              }
+              if (key === 'chart' && settings.blocs.chart) {
+                return (
+                  <div key={key} className="col-span-1 sm:col-span-2 lg:col-span-3 mt-2">
+                    <WeatherChart
+                      data={chartData}
+                      range={chartRange}
+                      onRangeChange={setChartRange}
+                      loading={chartIsLoading}
+                      error={chartErrorMessage}
+                      chartSettings={settings.chart}
+                    />
+                  </div>
+                )
+              }
+              return null
+            })}
           </div>
-
-
-
-          {settings.blocs.chart && (
-            <div className="mt-6">
-              <WeatherChart
-                data={chartData}
-                range={chartRange}
-                onRangeChange={setChartRange}
-                loading={chartIsLoading}
-                error={chartErrorMessage}
-                chartSettings={settings.chart}
-              />
-            </div>
-          )}
 
           {loading && (
             <div className="fixed bottom-20 left-1/2 -translate-x-1/2 px-4 py-2 rounded-full bg-slate-900/80 dark:bg-white/10 text-white text-sm backdrop-blur-md shadow-lg border border-white/10 z-50">

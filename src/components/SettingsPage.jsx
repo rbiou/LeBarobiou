@@ -1,9 +1,24 @@
 import React, { useState, useEffect } from 'react'
-import { FiArrowLeft, FiChevronDown, FiChevronUp, FiCheck } from 'react-icons/fi'
+import { FiArrowLeft, FiChevronDown, FiChevronUp, FiCheck, FiMenu } from 'react-icons/fi'
 import { WiThermometer, WiRain, WiStrongWind, WiDaySunny, WiTime3 } from 'react-icons/wi'
 import { useSettings } from '../context/SettingsContext'
 import Select from './ui/Select'
 import { HiGlobeAlt } from 'react-icons/hi2'
+import {
+    DndContext,
+    closestCenter,
+    PointerSensor,
+    useSensor,
+    useSensors,
+    TouchSensor
+} from '@dnd-kit/core'
+import {
+    arrayMove,
+    SortableContext,
+    verticalListSortingStrategy,
+    useSortable,
+} from '@dnd-kit/sortable'
+import { CSS } from '@dnd-kit/utilities'
 
 export default function SettingsPage({ onBack }) {
     const { settings, updateSetting, toggleSetting, t } = useSettings()
@@ -11,6 +26,33 @@ export default function SettingsPage({ onBack }) {
     useEffect(() => {
         window.scrollTo(0, 0)
     }, [])
+
+    const sensors = useSensors(
+        useSensor(PointerSensor),
+        useSensor(TouchSensor, {
+            activationConstraint: {
+                delay: 250,
+                tolerance: 5,
+            },
+        })
+    )
+
+    const handleDragEnd = (event) => {
+        const { active, over } = event
+
+        if (over && active.id !== over.id) {
+            const oldIndex = settings.blocOrder.indexOf(active.id)
+            const newIndex = settings.blocOrder.indexOf(over.id)
+
+            const newOrder = arrayMove(settings.blocOrder, oldIndex, newIndex)
+            updateSetting('blocOrder', newOrder)
+        }
+    }
+
+    // Default order fallback
+    const effectiveOrder = settings.blocOrder && settings.blocOrder.length > 0
+        ? settings.blocOrder
+        : ['weatherCards', 'precipitation', 'wind', 'sunMoon', 'chart']
 
     return (
         <div className="min-h-screen bg-bg text-text transition-colors duration-300">
@@ -52,155 +94,219 @@ export default function SettingsPage({ onBack }) {
                         {t('settings.blocs')}
                     </h2>
 
-                    <BlocSettings
-                        title={t('settings.blocs.weatherCards')}
-                        icon={<WiThermometer className="text-3xl text-orange-500" />}
-                        isActive={settings.blocs.weatherCards}
-                        onToggle={() => toggleSetting('blocs.weatherCards')}
-                    />
-
-                    <BlocSettings
-                        title={t('settings.blocs.precipitation')}
-                        icon={<WiRain className="text-3xl text-blue-500" />}
-                        isActive={settings.blocs.precipitation}
-                        onToggle={() => toggleSetting('blocs.precipitation')}
-                    />
-
-                    <BlocSettings
-                        title={t('settings.blocs.wind')}
-                        icon={<WiStrongWind className="text-3xl text-teal-500" />}
-                        isActive={settings.blocs.wind}
-                        onToggle={() => toggleSetting('blocs.wind')}
-                    />
-
-                    <BlocSettings
-                        title={t('settings.blocs.sunMoon')}
-                        icon={<WiDaySunny className="text-3xl text-amber-500" />}
-                        isActive={settings.blocs.sunMoon}
-                        onToggle={() => toggleSetting('blocs.sunMoon')}
-                    />
-
-                    {/* Chart Bloc with Sub-settings */}
-                    <BlocSettings
-                        title={t('settings.blocs.chart')}
-                        icon={<WiTime3 className="text-3xl text-indigo-500" />}
-                        isActive={settings.blocs.chart}
-                        onToggle={() => toggleSetting('blocs.chart')}
-                        collapsible
+                    <DndContext
+                        sensors={sensors}
+                        collisionDetection={closestCenter}
+                        onDragEnd={handleDragEnd}
                     >
-                        <div className="mt-2 space-y-6 pt-4 border-t border-border/50">
-
-                            {/* Show Temp Extremes Toggle */}
-                            <SettingsToggle
-                                label={t('settings.chart.showTempExtremes')}
-                                checked={settings.chart.showTempExtremes}
-                                onChange={() => updateSetting('chart', {
-                                    ...settings.chart,
-                                    showTempExtremes: !settings.chart.showTempExtremes
-                                })}
-                            />
-
-                            {/* Default Visible Data */}
-                            <div className="space-y-3">
-                                <h3 className="text-xs font-semibold uppercase tracking-wide text-text-muted">
-                                    {t('settings.chart.defaults')}
-                                </h3>
-                                <div className="grid grid-cols-1 gap-2">
-                                    {[
-                                        { key: 'temperature', label: t('chart.series.temperature') },
-                                        { key: 'humidity', label: t('chart.series.humidity') },
-                                        { key: 'pressure', label: t('chart.series.pressure') },
-                                        { key: 'precipAmount', label: t('chart.series.precipRain') },
-                                        { key: 'precipCum', label: t('chart.series.precipCum') },
-                                    ].map(({ key, label }) => {
-                                        const isAvailable = settings.chart.selectableInLegend[key]
-                                        const labelContent = (
-                                            <span className="flex items-center justify-between gap-2 w-full">
-                                                <span>{label}</span>
-                                                {!isAvailable && (
-                                                    <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400 font-bold uppercase tracking-wider whitespace-nowrap">
-                                                        {t('settings.chart.unavailable')}
-                                                    </span>
-                                                )}
-                                            </span>
-                                        )
-
+                        <SortableContext
+                            items={effectiveOrder}
+                            strategy={verticalListSortingStrategy}
+                        >
+                            <div className="space-y-4">
+                                {effectiveOrder.map((key) => {
+                                    if (key === 'weatherCards') {
                                         return (
-                                            <Checkbox
-                                                key={key}
-                                                label={labelContent}
-                                                checked={settings.chart.defaultVisible[key]}
-                                                disabled={!isAvailable}
-                                                onChange={() => {
-                                                    if (!isAvailable) return
-                                                    updateSetting('chart', {
-                                                        ...settings.chart,
-                                                        defaultVisible: {
-                                                            ...settings.chart.defaultVisible,
-                                                            [key]: !settings.chart.defaultVisible[key]
-                                                        }
-                                                    })
-                                                }}
-                                            />
+                                            <SortableBlocItem key={key} id={key}>
+                                                <BlocSettings
+                                                    title={t('settings.blocs.weatherCards')}
+                                                    icon={<WiThermometer className="text-3xl text-orange-500" />}
+                                                    isActive={settings.blocs.weatherCards}
+                                                    onToggle={() => toggleSetting('blocs.weatherCards')}
+                                                />
+                                            </SortableBlocItem>
                                         )
-                                    })}
-                                </div>
+                                    }
+                                    if (key === 'precipitation') {
+                                        return (
+                                            <SortableBlocItem key={key} id={key}>
+                                                <BlocSettings
+                                                    title={t('settings.blocs.precipitation')}
+                                                    icon={<WiRain className="text-3xl text-blue-500" />}
+                                                    isActive={settings.blocs.precipitation}
+                                                    onToggle={() => toggleSetting('blocs.precipitation')}
+                                                />
+                                            </SortableBlocItem>
+                                        )
+                                    }
+                                    if (key === 'wind') {
+                                        return (
+                                            <SortableBlocItem key={key} id={key}>
+                                                <BlocSettings
+                                                    title={t('settings.blocs.wind')}
+                                                    icon={<WiStrongWind className="text-3xl text-teal-500" />}
+                                                    isActive={settings.blocs.wind}
+                                                    onToggle={() => toggleSetting('blocs.wind')}
+                                                />
+                                            </SortableBlocItem>
+                                        )
+                                    }
+                                    if (key === 'sunMoon') {
+                                        return (
+                                            <SortableBlocItem key={key} id={key}>
+                                                <BlocSettings
+                                                    title={t('settings.blocs.sunMoon')}
+                                                    icon={<WiDaySunny className="text-3xl text-amber-500" />}
+                                                    isActive={settings.blocs.sunMoon}
+                                                    onToggle={() => toggleSetting('blocs.sunMoon')}
+                                                />
+                                            </SortableBlocItem>
+                                        )
+                                    }
+                                    if (key === 'chart') {
+                                        return (
+                                            <SortableBlocItem key={key} id={key}>
+                                                <BlocSettings
+                                                    title={t('settings.blocs.chart')}
+                                                    icon={<WiTime3 className="text-3xl text-indigo-500" />}
+                                                    isActive={settings.blocs.chart}
+                                                    onToggle={() => toggleSetting('blocs.chart')}
+                                                    collapsible
+                                                >
+                                                    <div className="mt-2 space-y-6 pt-4 border-t border-border/50">
+
+                                                        {/* Show Temp Extremes Toggle */}
+                                                        <SettingsToggle
+                                                            label={t('settings.chart.showTempExtremes')}
+                                                            checked={settings.chart.showTempExtremes}
+                                                            onChange={() => updateSetting('chart', {
+                                                                ...settings.chart,
+                                                                showTempExtremes: !settings.chart.showTempExtremes
+                                                            })}
+                                                        />
+
+                                                        {/* Default Visible Data */}
+                                                        <div className="space-y-3">
+                                                            <h3 className="text-xs font-semibold uppercase tracking-wide text-text-muted">
+                                                                {t('settings.chart.defaults')}
+                                                            </h3>
+                                                            <div className="grid grid-cols-1 gap-2">
+                                                                {[
+                                                                    { key: 'temperature', label: t('chart.series.temperature') },
+                                                                    { key: 'humidity', label: t('chart.series.humidity') },
+                                                                    { key: 'pressure', label: t('chart.series.pressure') },
+                                                                    { key: 'precipAmount', label: t('chart.series.precipRain') },
+                                                                    { key: 'precipCum', label: t('chart.series.precipCum') },
+                                                                ].map(({ key, label }) => {
+                                                                    const isAvailable = settings.chart.selectableInLegend[key]
+                                                                    const labelContent = (
+                                                                        <span className="flex items-center justify-between gap-2 w-full">
+                                                                            <span>{label}</span>
+                                                                            {!isAvailable && (
+                                                                                <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400 font-bold uppercase tracking-wider whitespace-nowrap">
+                                                                                    {t('settings.chart.unavailable')}
+                                                                                </span>
+                                                                            )}
+                                                                        </span>
+                                                                    )
+
+                                                                    return (
+                                                                        <Checkbox
+                                                                            key={key}
+                                                                            label={labelContent}
+                                                                            checked={settings.chart.defaultVisible[key]}
+                                                                            disabled={!isAvailable}
+                                                                            onChange={() => {
+                                                                                if (!isAvailable) return
+                                                                                updateSetting('chart', {
+                                                                                    ...settings.chart,
+                                                                                    defaultVisible: {
+                                                                                        ...settings.chart.defaultVisible,
+                                                                                        [key]: !settings.chart.defaultVisible[key]
+                                                                                    }
+                                                                                })
+                                                                            }}
+                                                                        />
+                                                                    )
+                                                                })}
+                                                            </div>
+                                                        </div>
+
+                                                        {/* Legend Selectable Data */}
+                                                        <div className="space-y-3">
+                                                            <h3 className="text-xs font-semibold uppercase tracking-wide text-text-muted">
+                                                                {t('settings.chart.legend')}
+                                                            </h3>
+                                                            <div className="text-xs text-text-muted mb-2 opacity-80">
+                                                                {t('settings.chart.selectableDesc')}
+                                                            </div>
+                                                            <div className="grid grid-cols-1 gap-2">
+                                                                {[
+                                                                    { key: 'temperature', label: t('chart.series.temperature') },
+                                                                    { key: 'humidity', label: t('chart.series.humidity') },
+                                                                    { key: 'pressure', label: t('chart.series.pressure') },
+                                                                    { key: 'precipAmount', label: t('chart.series.precipRain') },
+                                                                    { key: 'precipCum', label: t('chart.series.precipCum') },
+                                                                ].map(({ key, label }) => (
+                                                                    <Checkbox
+                                                                        key={key}
+                                                                        label={label}
+                                                                        checked={settings.chart.selectableInLegend[key]}
+                                                                        onChange={() => {
+                                                                            const newValue = !settings.chart.selectableInLegend[key]
+                                                                            // If disabling availability, also disable default visibility
+                                                                            const newDefaultVisible = newValue
+                                                                                ? settings.chart.defaultVisible
+                                                                                : { ...settings.chart.defaultVisible, [key]: false }
+
+                                                                            updateSetting('chart', {
+                                                                                ...settings.chart,
+                                                                                selectableInLegend: {
+                                                                                    ...settings.chart.selectableInLegend,
+                                                                                    [key]: newValue
+                                                                                },
+                                                                                defaultVisible: newDefaultVisible
+                                                                            })
+                                                                        }}
+                                                                    />
+                                                                ))}
+                                                            </div>
+                                                        </div>
+
+                                                    </div>
+                                                </BlocSettings>
+                                            </SortableBlocItem>
+                                        )
+                                    }
+                                })}
                             </div>
-
-                            {/* Legend Selectable Data */}
-                            <div className="space-y-3">
-                                <h3 className="text-xs font-semibold uppercase tracking-wide text-text-muted">
-                                    {t('settings.chart.legend')}
-                                </h3>
-                                <div className="text-xs text-text-muted mb-2 opacity-80">
-                                    {t('settings.chart.selectableDesc')}
-                                </div>
-                                <div className="grid grid-cols-1 gap-2">
-                                    {[
-                                        { key: 'temperature', label: t('chart.series.temperature') },
-                                        { key: 'humidity', label: t('chart.series.humidity') },
-                                        { key: 'pressure', label: t('chart.series.pressure') },
-                                        { key: 'precipAmount', label: t('chart.series.precipRain') },
-                                        { key: 'precipCum', label: t('chart.series.precipCum') },
-                                    ].map(({ key, label }) => (
-                                        <Checkbox
-                                            key={key}
-                                            label={label}
-                                            checked={settings.chart.selectableInLegend[key]}
-                                            onChange={() => {
-                                                const newValue = !settings.chart.selectableInLegend[key]
-                                                // If disabling availability, also disable default visibility
-                                                const newDefaultVisible = newValue
-                                                    ? settings.chart.defaultVisible
-                                                    : { ...settings.chart.defaultVisible, [key]: false }
-
-                                                updateSetting('chart', {
-                                                    ...settings.chart,
-                                                    selectableInLegend: {
-                                                        ...settings.chart.selectableInLegend,
-                                                        [key]: newValue
-                                                    },
-                                                    defaultVisible: newDefaultVisible
-                                                })
-                                            }}
-                                        />
-                                    ))}
-                                </div>
-                            </div>
-
-                        </div>
-                    </BlocSettings>
-
+                        </SortableContext>
+                    </DndContext>
                 </div>
             </main>
         </div>
     )
 }
 
-/**
- * Component for a Bloc Settings Card
- */
-function BlocSettings({ title, icon, isActive, onToggle, collapsible = false, children }) {
+function SortableBlocItem({ id, children }) {
+    const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id })
+
+    const style = {
+        transform: CSS.Transform.toString(transform),
+        transition,
+        zIndex: isDragging ? 10 : 1,
+        position: 'relative',
+    }
+
+    return (
+        <div ref={setNodeRef} style={style}>
+            {React.cloneElement(children, {
+                isDragging,
+                dragHandle: (
+                    <div
+                        {...attributes}
+                        {...listeners}
+                        className="p-2 -ml-2 cursor-grab active:cursor-grabbing text-text-muted hover:text-text hover:bg-card-alt rounded-lg transition-colors touch-none"
+                    >
+                        <FiMenu size={20} />
+                    </div>
+                )
+            })}
+        </div>
+    )
+}
+
+function BlocSettings({ title, icon, isActive, onToggle, collapsible = false, children, dragHandle, isDragging }) {
     const [isExpanded, setIsExpanded] = useState(false)
     const showContent = collapsible && isActive && (isExpanded || true) // Always expanded if active for now, or use toggle
 
@@ -208,9 +314,11 @@ function BlocSettings({ title, icon, isActive, onToggle, collapsible = false, ch
         <div className={`
       bg-card rounded-3xl shadow-soft border border-border/50 overflow-hidden transition-all duration-300
       ${!isActive ? 'opacity-70 grayscale-[0.5]' : 'opacity-100'}
+      ${isDragging ? 'shadow-xl scale-[1.02] ring-2 ring-primary/50 opacity-90' : ''}
     `}>
             <div className="p-5 flex items-center justify-between gap-4">
                 <div className="flex items-center gap-4">
+                    {dragHandle}
                     <div className={`
             w-12 h-12 rounded-2xl flex items-center justify-center text-2xl transition-colors
             ${isActive ? 'bg-card-alt shadow-sm' : 'bg-transparent border border-border/50'}
@@ -223,8 +331,8 @@ function BlocSettings({ title, icon, isActive, onToggle, collapsible = false, ch
                 <Switch checked={isActive} onChange={onToggle} />
             </div>
 
-            {/* Render children if active and collapsible */}
-            {collapsible && isActive && (
+            {/* Render children if active and collapsible - HIDE when dragging */}
+            {collapsible && isActive && !isDragging && (
                 <div className="px-5 pb-5 animate-in slide-in-from-top-2 fade-in duration-300">
                     {children}
                 </div>

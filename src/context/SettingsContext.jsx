@@ -15,6 +15,7 @@ const defaultSettings = {
         sunMoon: true,
         chart: true,
     },
+    blocOrder: ['weatherCards', 'precipitation', 'wind', 'sunMoon', 'chart'],
     chart: {
         defaultVisible: {
             temperature: true,
@@ -56,6 +57,7 @@ function loadSettings() {
                     ...defaultSettings,
                     ...parsed,
                     blocs: { ...defaultSettings.blocs, ...parsed.blocs },
+                    blocOrder: [...new Set(parsed.blocOrder || defaultSettings.blocOrder)],
                     chart: {
                         ...defaultSettings.chart,
                         ...parsed.chart,
