@@ -5,6 +5,7 @@ import { detectBrowserLanguage } from './utils/i18n'
 import ThemeToggle from './components/ThemeToggle'
 import WeatherCard from './components/WeatherCard'
 import WeatherChart from './components/WeatherChart'
+import MosaicBlock from './components/MosaicBlock'
 import PrecipitationCard from './components/PrecipitationCard'
 import WindCard from './components/WindCard'
 import SunMoonCard from './components/SunMoonCard'
@@ -680,6 +681,19 @@ function AppContent() {
                       chartSettings={settings.chart}
                     />
                   </div>
+                )
+              }
+              if (key === 'mosaic' && settings.blocs.mosaic) {
+                return (
+                  <MosaicBlock
+                    key={key}
+                    hourly={hourly}
+                    hourly7d={hourly7d}
+                    dailyHistory={dailyHistory}
+                    minLoading={loading}
+                    historyLoading={rainLoading}
+                    error={chartErrorMessage}
+                  />
                 )
               }
               return null

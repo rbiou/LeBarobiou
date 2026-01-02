@@ -14,8 +14,9 @@ const defaultSettings = {
         wind: true,
         sunMoon: true,
         chart: true,
+        mosaic: false,
     },
-    blocOrder: ['weatherCards', 'precipitation', 'wind', 'sunMoon', 'chart'],
+    blocOrder: ['weatherCards', 'precipitation', 'wind', 'sunMoon', 'chart', 'mosaic'],
     chart: {
         defaultVisible: {
             temperature: true,
@@ -37,6 +38,9 @@ const defaultSettings = {
         },
         showTempExtremes: true,
     },
+    mosaic: {
+        showTempExtremes: true,
+    },
 }
 
 const SettingsContext = createContext()
@@ -56,13 +60,17 @@ function loadSettings() {
                 return {
                     ...defaultSettings,
                     ...parsed,
-                    blocs: { ...defaultSettings.blocs, ...parsed.blocs },
-                    blocOrder: [...new Set(parsed.blocOrder || defaultSettings.blocOrder)],
+                    blocs: { ...defaultSettings.blocs, ...(parsed.blocs || {}) },
+                    blocOrder: [...new Set([...(Array.isArray(parsed.blocOrder) ? parsed.blocOrder : []), ...defaultSettings.blocOrder])],
                     chart: {
                         ...defaultSettings.chart,
-                        ...parsed.chart,
-                        defaultVisible: { ...defaultSettings.chart.defaultVisible, ...parsed.chart?.defaultVisible },
-                        selectableInLegend: { ...defaultSettings.chart.selectableInLegend, ...parsed.chart?.selectableInLegend },
+                        ...(parsed.chart || {}),
+                        defaultVisible: { ...defaultSettings.chart.defaultVisible, ...(parsed.chart?.defaultVisible || {}) },
+                        selectableInLegend: { ...defaultSettings.chart.selectableInLegend, ...(parsed.chart?.selectableInLegend || {}) },
+                    },
+                    mosaic: {
+                        ...defaultSettings.mosaic,
+                        ...(parsed.mosaic || {}),
                     },
                 }
             }

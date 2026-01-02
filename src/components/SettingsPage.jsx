@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react'
-import { FiArrowLeft, FiChevronDown, FiChevronUp, FiCheck, FiMenu } from 'react-icons/fi'
+import { FiArrowLeft, FiChevronDown, FiChevronUp, FiCheck, FiMenu, FiGrid } from 'react-icons/fi'
 import { WiThermometer, WiRain, WiStrongWind, WiDaySunny, WiTime3 } from 'react-icons/wi'
 import { useSettings } from '../context/SettingsContext'
 import Select from './ui/Select'
@@ -37,8 +37,15 @@ export default function SettingsPage({ onBack }) {
         })
     )
 
+    const [activeDragId, setActiveDragId] = useState(null)
+
+    const handleDragStart = (event) => {
+        setActiveDragId(event.active.id)
+    }
+
     const handleDragEnd = (event) => {
         const { active, over } = event
+        setActiveDragId(null)
 
         if (over && active.id !== over.id) {
             const oldIndex = settings.blocOrder.indexOf(active.id)
@@ -47,6 +54,10 @@ export default function SettingsPage({ onBack }) {
             const newOrder = arrayMove(settings.blocOrder, oldIndex, newIndex)
             updateSetting('blocOrder', newOrder)
         }
+    }
+
+    const handleDragCancel = () => {
+        setActiveDragId(null)
     }
 
     // Default order fallback
@@ -97,7 +108,9 @@ export default function SettingsPage({ onBack }) {
                     <DndContext
                         sensors={sensors}
                         collisionDetection={closestCenter}
+                        onDragStart={handleDragStart}
                         onDragEnd={handleDragEnd}
+                        onDragCancel={handleDragCancel}
                     >
                         <SortableContext
                             items={effectiveOrder}
@@ -113,6 +126,7 @@ export default function SettingsPage({ onBack }) {
                                                     icon={<WiThermometer className="text-3xl text-orange-500" />}
                                                     isActive={settings.blocs.weatherCards}
                                                     onToggle={() => toggleSetting('blocs.weatherCards')}
+                                                    isGlobalDragActive={!!activeDragId}
                                                 />
                                             </SortableBlocItem>
                                         )
@@ -125,6 +139,7 @@ export default function SettingsPage({ onBack }) {
                                                     icon={<WiRain className="text-3xl text-blue-500" />}
                                                     isActive={settings.blocs.precipitation}
                                                     onToggle={() => toggleSetting('blocs.precipitation')}
+                                                    isGlobalDragActive={!!activeDragId}
                                                 />
                                             </SortableBlocItem>
                                         )
@@ -137,6 +152,7 @@ export default function SettingsPage({ onBack }) {
                                                     icon={<WiStrongWind className="text-3xl text-teal-500" />}
                                                     isActive={settings.blocs.wind}
                                                     onToggle={() => toggleSetting('blocs.wind')}
+                                                    isGlobalDragActive={!!activeDragId}
                                                 />
                                             </SortableBlocItem>
                                         )
@@ -149,6 +165,7 @@ export default function SettingsPage({ onBack }) {
                                                     icon={<WiDaySunny className="text-3xl text-amber-500" />}
                                                     isActive={settings.blocs.sunMoon}
                                                     onToggle={() => toggleSetting('blocs.sunMoon')}
+                                                    isGlobalDragActive={!!activeDragId}
                                                 />
                                             </SortableBlocItem>
                                         )
@@ -162,6 +179,7 @@ export default function SettingsPage({ onBack }) {
                                                     isActive={settings.blocs.chart}
                                                     onToggle={() => toggleSetting('blocs.chart')}
                                                     collapsible
+                                                    isGlobalDragActive={!!activeDragId}
                                                 >
                                                     <div className="mt-2 space-y-6 pt-4 border-t border-border/50">
 
@@ -268,6 +286,31 @@ export default function SettingsPage({ onBack }) {
                                             </SortableBlocItem>
                                         )
                                     }
+                                    if (key === 'mosaic') {
+                                        return (
+                                            <SortableBlocItem key={key} id={key}>
+                                                <BlocSettings
+                                                    title={t('settings.blocs.mosaic')}
+                                                    icon={<FiGrid className="text-3xl text-purple-500" />}
+                                                    isActive={settings.blocs.mosaic}
+                                                    onToggle={() => toggleSetting('blocs.mosaic')}
+                                                    collapsible
+                                                    isGlobalDragActive={!!activeDragId}
+                                                >
+                                                    <div className="mt-2 space-y-6 pt-4 border-t border-border/50">
+                                                        <SettingsToggle
+                                                            label={t('settings.chart.showTempExtremes')}
+                                                            checked={settings.mosaic?.showTempExtremes ?? true}
+                                                            onChange={() => updateSetting('mosaic', {
+                                                                ...settings.mosaic,
+                                                                showTempExtremes: !settings.mosaic?.showTempExtremes
+                                                            })}
+                                                        />
+                                                    </div>
+                                                </BlocSettings>
+                                            </SortableBlocItem>
+                                        )
+                                    }
                                 })}
                             </div>
                         </SortableContext>
@@ -306,7 +349,7 @@ function SortableBlocItem({ id, children }) {
     )
 }
 
-function BlocSettings({ title, icon, isActive, onToggle, collapsible = false, children, dragHandle, isDragging }) {
+function BlocSettings({ title, icon, isActive, onToggle, collapsible = false, children, dragHandle, isDragging, isGlobalDragActive }) {
     const [isExpanded, setIsExpanded] = useState(false)
     const showContent = collapsible && isActive && (isExpanded || true) // Always expanded if active for now, or use toggle
 
@@ -331,8 +374,8 @@ function BlocSettings({ title, icon, isActive, onToggle, collapsible = false, ch
                 <Switch checked={isActive} onChange={onToggle} />
             </div>
 
-            {/* Render children if active and collapsible - HIDE when dragging */}
-            {collapsible && isActive && !isDragging && (
+            {/* Render children if active and collapsible - HIDE when dragging (local or global) */}
+            {collapsible && isActive && !isDragging && !isGlobalDragActive && (
                 <div className="px-5 pb-5 animate-in slide-in-from-top-2 fade-in duration-300">
                     {children}
                 </div>

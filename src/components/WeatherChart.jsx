@@ -58,7 +58,21 @@ const tickFormatterFactory = (range, locale) => {
   }
 }
 
-export default function WeatherChart({ data, range = 'day', onRangeChange, loading = false, error = null, chartSettings = null }) {
+export default function WeatherChart({
+  data,
+  range = 'day',
+  onRangeChange,
+  loading = false,
+  error = null,
+  chartSettings = null,
+  // New props for Mosaic mode
+  hideControls = false,   // Hides header, tabs, fullscreen
+  showLegend = true,      // Toggles legend visibility
+  forceVisible = null,    // Overrides internal visibility state
+  height = null,          // Overrides default height
+  className = '',         // Appends classes
+  title = null            // Optional title override
+}) {
   const { isDark } = useTheme()
   const { settings, t } = useSettings()
   const containerRef = useRef(null)
@@ -94,8 +108,8 @@ export default function WeatherChart({ data, range = 'day', onRangeChange, loadi
     return () => window.removeEventListener('resize', handleResize)
   }, [])
 
-  // Use chartSettings for default visibility if provided
-  const [visible, setVisible] = useState(() => {
+  // Use chartSettings for default visibility if provided, OR forceVisible if present
+  const [internalVisible, setInternalVisible] = useState(() => {
     const defaults = chartSettings?.defaultVisible || {}
     return {
       temperature: defaults.temperature ?? true,
@@ -108,6 +122,10 @@ export default function WeatherChart({ data, range = 'day', onRangeChange, loadi
       precipCum: defaults.precipCum ?? true,
     }
   })
+
+  // Use forced visibility if provided, otherwise internal state
+  const visible = forceVisible || internalVisible
+  const setVisible = forceVisible ? () => { } : setInternalVisible
 
   // Whether to show temp extremes labels
   const showTempExtremes = chartSettings?.showTempExtremes ?? true
@@ -428,53 +446,48 @@ export default function WeatherChart({ data, range = 'day', onRangeChange, loadi
     return true
   })
 
-  // Full Screen & Rotation
-  const isPortrait = windowSize.height > windowSize.width
-  const shouldRotate = isFullScreen && isPortrait
-  const fullScreenStyles = isFullScreen ? {
-    position: 'fixed', top: shouldRotate ? '50%' : 0, left: shouldRotate ? '50%' : 0, width: shouldRotate ? '100vh' : '100vw', height: shouldRotate ? '100vw' : '100vh',
-    transform: shouldRotate ? 'translate(-50%, -50%) rotate(90deg)' : 'none', zIndex: 50, borderRadius: 0, margin: 0,
-  } : {}
-  const containerClasses = `bg-card rounded-2xl shadow-soft p-4 sm:p-6 transition-all ${isFullScreen ? 'overflow-hidden bg-card/95 backdrop-blur-sm flex flex-col' : ''}`
+  // Determine container dimensions and styles
+  const shouldRotate = isFullScreen && windowSize.width < windowSize.height
+  const containerClasses = `bg-card rounded-2xl shadow-soft p-4 sm:p-6 transition-all ${isFullScreen ? 'overflow-hidden bg-card/95 backdrop-blur-sm flex flex-col' : ''} ${className}`
   const contentPadding = isFullScreen ? (shouldRotate ? 'p-6 pb-2' : 'p-4 sm:p-8') : ''
-  const chartWidth = shouldRotate ? windowSize.height : windowSize.width
-  const estimatedPlotWidth = Math.max(150, chartWidth * 0.75)
-  const width30d = Math.max(8, Math.floor(estimatedPlotWidth / 30)); const width7d = Math.max(8, Math.floor(estimatedPlotWidth / 28)); const widthDay = Math.max(8, Math.floor(estimatedPlotWidth / 24))
-
-  // Range Options
-  const RANGE_OPTIONS = useMemo(() => [
-    { value: 'day', label: t('chart.range.day') },
-    { value: '7d', label: t('chart.range.week') },
-    { value: '30d', label: t('chart.range.month') },
-  ], [t])
-
-  const RANGE_TITLE_LABELS = {
-    day: t('chart.todayDesc') || t('chart.range.day'),
-    '7d': t('chart.7daysDesc') || t('chart.range.week'),
-    '30d': t('chart.30daysDesc') || t('chart.range.month'),
-  }
+  const chartHeightClass = height ? '' : (isFullScreen ? 'flex-1 h-full min-h-0' : 'w-full h-80 sm:h-96')
+  const chartStyle = height ? { height } : {}
+  const fullScreenStyleObject = isFullScreen ? { position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', zIndex: 50 } : {}
 
   return (
-    <div className={`${containerClasses} ${contentPadding}`} style={fullScreenStyles}>
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between mb-2">
-        <div className="flex items-center gap-2">
-          <button onClick={toggleFullScreen} className="p-1.5 rounded-full hover:bg-card-alt text-text-muted hover:text-text transition-colors" title={isFullScreen ? t('chart.exitFullscreen') : t('chart.fullscreen')}>
-            {isFullScreen ? <FiMinimize size={18} /> : <FiMaximize size={18} />}
-          </button>
-          <div className="text-sm text-text-muted">{RANGE_TITLE_LABELS[range]}</div>
+    <div className={`${containerClasses} ${contentPadding}`} style={fullScreenStyleObject}>
+
+      {!hideControls ? (
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between mb-2">
+          <div className="flex items-center gap-2">
+            <button onClick={toggleFullScreen} className="p-1.5 rounded-full hover:bg-card-alt text-text-muted hover:text-text transition-colors" title={isFullScreen ? t('chart.exitFullscreen') : t('chart.fullscreen')}>
+              {isFullScreen ? <FiMinimize size={18} /> : <FiMaximize size={18} />}
+            </button>
+            <div className="text-sm font-medium text-text-secondary">
+              {t('chart.statistics').replace('{range}', range === 'day' ? t('chart.range.day') : (range === '7d' ? t('chart.range.week') : t('chart.range.month')))}
+            </div>
+          </div>
+          <SwipeableTabs
+            options={[
+              { value: 'day', label: t('chart.range.day') },
+              { value: '7d', label: t('chart.range.week') },
+              { value: '30d', label: t('chart.range.month') },
+            ]}
+            value={range}
+            onChange={handleRangeChange}
+            className={`h-10 w-full ${shouldRotate ? 'w-64' : 'sm:w-64'} rounded-full border border-border bg-card shadow-sm p-1 transition-all`}
+            itemClassName="rounded-full text-xs font-medium" activeItemClassName="text-primary font-bold dark:text-white"
+            inactiveItemClassName="text-text-muted hover:text-text-secondary" indicatorClassName="rounded-full bg-primary/10 dark:bg-primary/20 border border-primary/50 scale-x-100"
+          />
+          {isFullScreen && (
+            <button onClick={toggleFullScreen} className="absolute top-4 right-4 p-2 rounded-full bg-card-alt/50 hover:bg-card-alt text-text-muted hover:text-text transition-colors sm:hidden" style={{ zIndex: 60 }}>
+              <FiX size={20} />
+            </button>
+          )}
         </div>
-        <SwipeableTabs
-          options={RANGE_OPTIONS} value={range} onChange={handleRangeChange}
-          className={`h-10 w-full ${shouldRotate ? 'w-64' : 'sm:w-64'} rounded-full border border-border bg-card shadow-sm p-1 transition-all`}
-          itemClassName="rounded-full text-xs font-medium" activeItemClassName="text-primary font-bold dark:text-white"
-          inactiveItemClassName="text-text-muted hover:text-text-secondary" indicatorClassName="rounded-full bg-primary/10 dark:bg-primary/20 border border-primary/50 scale-x-100"
-        />
-        {isFullScreen && (
-          <button onClick={toggleFullScreen} className="absolute top-4 right-4 p-2 rounded-full bg-card-alt/50 hover:bg-card-alt text-text-muted hover:text-text transition-colors sm:hidden" style={{ zIndex: 60 }}>
-            <FiX size={20} />
-          </button>
-        )}
-      </div>
+      ) : (
+        title && <div className="text-xs font-semibold uppercase tracking-wide text-text-muted mb-2 text-center">{title}</div>
+      )}
 
       {loading && (
         <div className="w-full rounded-xl border border-dashed border-border bg-card-alt py-10 text-center text-sm text-text-muted">
@@ -497,38 +510,40 @@ export default function WeatherChart({ data, range = 'day', onRangeChange, loadi
       {!loading && !showEmptyState && (
         <div className={`flex flex-col ${isFullScreen ? 'flex-1 h-full min-h-0' : ''}`}>
           {/* Custom HTML Legend */}
-          <div className="relative shrink-0 border-b border-border/50 mb-0 group">
-            {canScrollLeft && (
-              <div className="absolute left-0 top-0 bottom-0 z-10 flex items-center bg-gradient-to-r from-card via-card to-transparent pl-0 pr-4">
-                <button onClick={() => scrollLegend('left')} className="p-1 rounded-full bg-card-alt border border-border shadow-sm hover:bg-card-alt/80 text-text-muted hover:text-text transition-colors">
-                  <FiChevronLeft size={14} />
-                </button>
-              </div>
-            )}
-            <div ref={legendRef} onScroll={checkScroll} className="flex items-center gap-2 overflow-x-auto px-1 pb-3 pt-2 no-scrollbar" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none', WebkitOverflowScrolling: 'touch' }}>
-              {legendItems.map((entry) => {
-                const active = visible[entry.key] !== false
-                return (
-                  <button key={entry.key} type="button" onClick={() => handleLegendClick(entry.key)} className={`flex items-center gap-2 px-2.5 py-1.5 rounded-full transition-all touch-manipulation whitespace-nowrap border shrink-0 ${active ? 'opacity-100 bg-card-alt/50 shadow-sm border-border/50' : 'opacity-50 grayscale hover:opacity-70 border-transparent'}`} aria-pressed={active}>
-                    <span className="inline-block w-2.5 h-2.5 rounded-full shrink-0" style={{ backgroundColor: entry.color, border: entry.type === 'line' ? `1px solid ${entry.color}` : 'none', opacity: entry.type === 'line' && entry.dash ? 0.7 : 1 }} />
-                    <span className={`text-xs font-medium whitespace-nowrap ${active ? 'text-text' : 'text-text-muted line-through decoration-text-muted/50'}`}>
-                      {entry.label}
-                    </span>
+          {showLegend && (
+            <div className="relative shrink-0 border-b border-border/50 mb-0 group">
+              {canScrollLeft && (
+                <div className="absolute left-0 top-0 bottom-0 z-10 flex items-center bg-gradient-to-r from-card via-card to-transparent pl-0 pr-4">
+                  <button onClick={() => scrollLegend('left')} className="p-1 rounded-full bg-card-alt border border-border shadow-sm hover:bg-card-alt/80 text-text-muted hover:text-text transition-colors">
+                    <FiChevronLeft size={14} />
                   </button>
-                )
-              })}
-              <div className="w-1 shrink-0" />
-            </div>
-            {canScrollRight && (
-              <div className="absolute right-0 top-0 bottom-0 z-10 flex items-center bg-gradient-to-l from-card via-card to-transparent pr-0 pl-4">
-                <button onClick={() => scrollLegend('right')} className="p-1 rounded-full bg-card-alt border border-border shadow-sm hover:bg-card-alt/80 text-text-muted hover:text-text transition-colors">
-                  <FiChevronRight size={14} />
-                </button>
+                </div>
+              )}
+              <div ref={legendRef} onScroll={checkScroll} className="flex items-center gap-2 overflow-x-auto px-1 pb-3 pt-2 no-scrollbar" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none', WebkitOverflowScrolling: 'touch' }}>
+                {legendItems.map((entry) => {
+                  const active = visible[entry.key] !== false
+                  return (
+                    <button key={entry.key} type="button" onClick={() => handleLegendClick(entry.key)} className={`flex items-center gap-2 px-2.5 py-1.5 rounded-full transition-all touch-manipulation whitespace-nowrap border shrink-0 ${active ? 'opacity-100 bg-card-alt/50 shadow-sm border-border/50' : 'opacity-50 grayscale hover:opacity-70 border-transparent'}`} aria-pressed={active}>
+                      <span className="inline-block w-2.5 h-2.5 rounded-full shrink-0" style={{ backgroundColor: entry.color, border: entry.type === 'line' ? `1px solid ${entry.color}` : 'none', opacity: entry.type === 'line' && entry.dash ? 0.7 : 1 }} />
+                      <span className={`text-xs font-medium whitespace-nowrap ${active ? 'text-text' : 'text-text-muted line-through decoration-text-muted/50'}`}>
+                        {entry.label}
+                      </span>
+                    </button>
+                  )
+                })}
+                <div className="w-1 shrink-0" />
               </div>
-            )}
-          </div>
+              {canScrollRight && (
+                <div className="absolute right-0 top-0 bottom-0 z-10 flex items-center bg-gradient-to-l from-card via-card to-transparent pr-0 pl-4">
+                  <button onClick={() => scrollLegend('right')} className="p-1 rounded-full bg-card-alt border border-border shadow-sm hover:bg-card-alt/80 text-text-muted hover:text-text transition-colors">
+                    <FiChevronRight size={14} />
+                  </button>
+                </div>
+              )}
+            </div>
+          )}
 
-          <div className={`${isFullScreen ? 'flex-1 w-full min-h-0' : 'w-full h-80 sm:h-96'} select-none -ml-2`}>
+          <div className={`${chartHeightClass} select-none -ml-2`} style={chartStyle}>
             <ResponsiveContainer width="100%" height="100%">
               <ComposedChart data={prepared} margin={{ top: 10, right: 10, left: 10, bottom: 30 }}>
                 <CartesianGrid strokeDasharray="3 3" stroke={colors.grid} />
