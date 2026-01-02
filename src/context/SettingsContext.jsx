@@ -9,6 +9,7 @@ const defaultSettings = {
     version: SETTINGS_VERSION,
     language: 'auto', // 'auto' | 'fr' | 'en'
     blocs: {
+        forecast: true,
         weatherCards: true,
         precipitation: true,
         wind: true,
@@ -16,7 +17,10 @@ const defaultSettings = {
         chart: true,
         mosaic: false,
     },
-    blocOrder: ['weatherCards', 'precipitation', 'wind', 'sunMoon', 'chart', 'mosaic'],
+    forecast: {
+        autoExpandToday: true
+    },
+    blocOrder: ['forecast', 'weatherCards', 'precipitation', 'wind', 'sunMoon', 'chart', 'mosaic'],
     chart: {
         defaultVisible: {
             temperature: true,
@@ -61,7 +65,16 @@ function loadSettings() {
                     ...defaultSettings,
                     ...parsed,
                     blocs: { ...defaultSettings.blocs, ...(parsed.blocs || {}) },
-                    blocOrder: [...new Set([...(Array.isArray(parsed.blocOrder) ? parsed.blocOrder : []), ...defaultSettings.blocOrder])],
+                    blocs: { ...defaultSettings.blocs, ...(parsed.blocs || {}) },
+                    blocOrder: (() => {
+                        const savedOrder = Array.isArray(parsed.blocOrder) ? parsed.blocOrder : []
+                        // If forecast is missing (new feature), add it to the start
+                        if (!savedOrder.includes('forecast')) {
+                            return ['forecast', ...savedOrder, ...defaultSettings.blocOrder].filter((item, index, self) => self.indexOf(item) === index)
+                        }
+                        // Otherwise standard merge (append new defaults at end)
+                        return [...new Set([...savedOrder, ...defaultSettings.blocOrder])]
+                    })(),
                     chart: {
                         ...defaultSettings.chart,
                         ...(parsed.chart || {}),

@@ -6,6 +6,7 @@ import ThemeToggle from './components/ThemeToggle'
 import WeatherCard from './components/WeatherCard'
 import WeatherChart from './components/WeatherChart'
 import MosaicBlock from './components/MosaicBlock'
+import ForecastBlock from './components/ForecastBlock'
 import PrecipitationCard from './components/PrecipitationCard'
 import WindCard from './components/WindCard'
 import SunMoonCard from './components/SunMoonCard'
@@ -632,6 +633,13 @@ function AppContent() {
                       maxTime={metricExtremes.pressure?.maxTime}
                     />
                   </React.Fragment>
+                )
+              }
+              if (key === 'forecast' && settings.blocs.forecast) {
+                return (
+                  <div key={key} className="col-span-full">
+                    <ForecastBlock lat={current?.lat} lon={current?.lon} />
+                  </div>
                 )
               }
               if (key === 'precipitation' && settings.blocs.precipitation) {

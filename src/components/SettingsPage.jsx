@@ -118,6 +118,31 @@ export default function SettingsPage({ onBack }) {
                         >
                             <div className="space-y-4">
                                 {effectiveOrder.map((key) => {
+                                    if (key === 'forecast') {
+                                        return (
+                                            <SortableBlocItem key={key} id={key}>
+                                                <BlocSettings
+                                                    title={t('settings.blocs.forecast')}
+                                                    icon={<WiDaySunny className="text-3xl text-yellow-500" />}
+                                                    isActive={settings.blocs.forecast}
+                                                    onToggle={() => toggleSetting('blocs.forecast')}
+                                                    collapsible
+                                                    isGlobalDragActive={!!activeDragId}
+                                                >
+                                                    <div className="mt-2 space-y-6 pt-4 border-t border-border/50">
+                                                        <SettingsToggle
+                                                            label={t('forecast.autoExpand')}
+                                                            checked={settings.forecast?.autoExpandToday ?? true}
+                                                            onChange={() => updateSetting('forecast', {
+                                                                ...settings.forecast,
+                                                                autoExpandToday: !settings.forecast?.autoExpandToday
+                                                            })}
+                                                        />
+                                                    </div>
+                                                </BlocSettings>
+                                            </SortableBlocItem>
+                                        )
+                                    }
                                     if (key === 'weatherCards') {
                                         return (
                                             <SortableBlocItem key={key} id={key}>
