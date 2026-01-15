@@ -638,7 +638,7 @@ function AppContent() {
               if (key === 'forecast' && settings.blocs.forecast) {
                 return (
                   <div key={key} className="col-span-full">
-                    <ForecastBlock lat={current?.lat} lon={current?.lon} />
+                    <ForecastBlock lat={current?.lat} lon={current?.lon} lastUpdate={lastUpdate} />
                   </div>
                 )
               }
@@ -649,6 +649,7 @@ function AppContent() {
                     loading={rainLoading}
                     statusCard={precipStatusCard}
                     summaryCards={rainSummaryCards}
+                    lastUpdate={lastUpdate}
                   />
                 )
               }

@@ -8,6 +8,7 @@ const SETTINGS_VERSION = 1
 const defaultSettings = {
     version: SETTINGS_VERSION,
     language: 'auto', // 'auto' | 'fr' | 'en'
+    weatherModel: 'auto', // 'auto' | 'meteofrance_seamless' | 'icon_seamless' | 'gfs_seamless' | 'ecmwf_ifs04'
     blocs: {
         forecast: true,
         weatherCards: true,

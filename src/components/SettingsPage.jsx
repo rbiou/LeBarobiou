@@ -99,6 +99,27 @@ export default function SettingsPage({ onBack }) {
                     />
                 </section>
 
+                {/* Weather Model Section */}
+                <section className="bg-card rounded-3xl shadow-soft p-5 border border-border/50">
+                    <h2 className="text-sm font-semibold uppercase tracking-wider text-text-muted mb-4 px-1">
+                        {t('settings.weatherModel')}
+                    </h2>
+                    <Select
+                        options={[
+                            { value: 'auto', label: t('settings.weatherModel.auto') },
+                            { value: 'meteofrance_seamless', label: t('settings.weatherModel.meteofrance_seamless') },
+                            { value: 'icon_seamless', label: t('settings.weatherModel.icon_seamless') },
+                            { value: 'gfs_seamless', label: t('settings.weatherModel.gfs_seamless') },
+                            { value: 'ecmwf_ifs04', label: t('settings.weatherModel.ecmwf_ifs04') },
+                        ]}
+                        value={settings.weatherModel || 'auto'}
+                        onChange={(val) => updateSetting('weatherModel', val)}
+                    />
+                    <p className="mt-3 text-xs text-text-muted px-1">
+                        {t('settings.weatherModel.desc')}
+                    </p>
+                </section>
+
                 {/* Blocs Configuration - List of cards */}
                 <div className="space-y-4">
                     <h2 className="text-sm font-semibold uppercase tracking-wider text-text-muted px-2">

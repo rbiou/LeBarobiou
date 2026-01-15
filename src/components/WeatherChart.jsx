@@ -548,7 +548,7 @@ export default function WeatherChart({
               <ComposedChart data={prepared} margin={{ top: 10, right: 10, left: 10, bottom: 30 }}>
                 <CartesianGrid strokeDasharray="3 3" stroke={colors.grid} />
                 <XAxis dataKey="timeMs" type="number" domain={domain} ticks={ticks} tickFormatter={tickFormatter} tick={{ fontSize: 11, fill: colors.text }} minTickGap={20} height={30} padding={{ left: 10, right: 10 }} label={{ value: xAxisLabel, position: 'insideBottom', offset: -5, style: axisLabelStyle }} />
-                <YAxis yAxisId="left" tick={{ fontSize: 11, fill: colors.text }} domain={['auto', 'auto']} tickFormatter={oneDecimal} hide={!showLeftAxis} width={35} />
+                <YAxis yAxisId="left" tick={{ fontSize: 11, fill: colors.text }} domain={['auto', 'auto']} padding={{ top: 30, bottom: 10 }} tickFormatter={oneDecimal} hide={!showLeftAxis} width={35} />
                 <YAxis yAxisId="right" orientation="right" tick={{ fontSize: 11, fill: colors.text }} domain={[0, 100]} tickFormatter={oneDecimal} hide={!showHumidityAxis} width={showHumidityAxis ? 35 : 0} />
                 <YAxis yAxisId="pressure" orientation="right" tick={{ fontSize: 11, fill: colors.text }} domain={['auto', 'auto']} tickFormatter={oneDecimal} hide={!showPressureAxis} width={showPressureAxis ? 40 : 0} />
                 <YAxis yAxisId="rain" orientation="right" tick={{ fontSize: 11, fill: colors.text }} domain={rainScale.domain} ticks={rainScale.ticks} tickFormatter={rainTickFormatter} hide={!showRainAxis} width={showRainAxis ? 35 : 0} />
@@ -556,13 +556,25 @@ export default function WeatherChart({
                   contentStyle={{ backgroundColor: isDark ? '#1e293b' : '#ffffff', borderColor: isDark ? '#334155' : '#e2e8f0', color: isDark ? '#f1f5f9' : '#0f172a', borderRadius: '12px', boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)' }}
                   labelFormatter={(v) => {
                     const d = new Date(v)
+                    // Visual fix: Round to nearest hour if minutes > 45 (e.g. 23:59 -> 00:00 or 23:00)
+                    if (d.getMinutes() > 45) {
+                      d.setHours(d.getHours() + 1)
+                      d.setMinutes(0)
+                    } else if (d.getMinutes() < 15) {
+                      d.setMinutes(0)
+                    }
+
                     if (range === '30d') return d.toLocaleDateString(locale, { weekday: 'short', day: 'numeric', month: 'short' })
                     return d.toLocaleString(locale, { hour: '2-digit', minute: '2-digit', weekday: 'short' })
                   }}
                   content={({ active, payload, label }) => {
                     if (!active || !payload || !payload.length) return null
                     const toFixed = (val) => { const parsed = Number(val); return Number.isFinite(parsed) ? parsed.toFixed(1) : '—' }
-                    const d = new Date(label)
+
+                    // Visual fix: Round timestamp to nearest hour to avoid :59/:58
+                    const roundedLabel = Math.round(label / 3600000) * 3600000
+                    const d = new Date(roundedLabel)
+
                     const dateLabel = range === '30d' ? d.toLocaleDateString(locale, { weekday: 'short', day: 'numeric', month: 'short' }) : d.toLocaleString(locale, { hour: '2-digit', minute: '2-digit', weekday: 'short' })
                     const precipBar = precipBars.find(bar => label >= bar.startMs && label < bar.endMs)
                     return (

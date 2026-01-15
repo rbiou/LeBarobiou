@@ -50,7 +50,7 @@ const ScrollArrow = ({ direction, onClick }) => (
     </div>
 );
 
-export default function ForecastBlock({ lat, lon }) {
+export default function ForecastBlock({ lat, lon, lastUpdate }) {
     const { t, settings } = useSettings();
     const [forecast, setForecast] = useState(null);
     const [loading, setLoading] = useState(true);
@@ -72,7 +72,7 @@ export default function ForecastBlock({ lat, lon }) {
         let isMounted = true;
         setLoading(true);
 
-        fetchForecast(lat, lon)
+        fetchForecast(lat, lon, settings.weatherModel)
             .then(data => {
                 if (isMounted) {
                     if (data) {
@@ -98,7 +98,7 @@ export default function ForecastBlock({ lat, lon }) {
             });
 
         return () => { isMounted = false; };
-    }, [lat, lon, settings.forecast?.autoExpandToday, t]);
+    }, [lat, lon, settings.forecast?.autoExpandToday, settings.weatherModel, lastUpdate, t]);
 
     // Prepare Timeline Data (Grouping hours by day)
     const timelineData = useMemo(() => {

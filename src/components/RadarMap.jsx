@@ -5,7 +5,7 @@ import { useSettings } from '../context/SettingsContext'
 import { HiPlay, HiPause, HiBolt } from 'react-icons/hi2'
 import SwipeableTabs from './ui/SwipeableTabs'
 
-export default function RadarMap({ embedded = false } = {}) {
+export default function RadarMap({ embedded = false, lastUpdate } = {}) {
     const { isDark } = useTheme()
     const { t } = useSettings()
     const [frames, setFrames] = useState([])
@@ -86,7 +86,7 @@ export default function RadarMap({ embedded = false } = {}) {
         return () => {
             isMounted = false
         }
-    }, [])
+    }, [lastUpdate])
 
     useEffect(() => {
         if (intervalRef.current) clearInterval(intervalRef.current)

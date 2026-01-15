@@ -1,8 +1,9 @@
 import React from 'react';
+import { FiClock, FiDroplet } from 'react-icons/fi';
 import RadarMap from './RadarMap';
 import { useSettings } from '../context/SettingsContext';
 
-const PrecipitationCard = ({ loading, statusCard, summaryCards }) => {
+const PrecipitationCard = ({ loading, statusCard, summaryCards, lastUpdate }) => {
     const { t } = useSettings();
 
     return (
@@ -21,29 +22,29 @@ const PrecipitationCard = ({ loading, statusCard, summaryCards }) => {
             <div className="mt-4 flex flex-col gap-5">
                 <section className="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-4">
                     <div
-                        className={`relative overflow-hidden rounded-2xl border p-4 sm:p-5 ${statusCard.variant === 'wet'
-                            ? 'border-sky-500/60 bg-gradient-to-br from-sky-600 via-blue-600 to-blue-700 text-white shadow-lg shadow-sky-500/30'
+                        className={`relative overflow-hidden rounded-2xl border p-4 sm:p-5 transition-all duration-300 ${statusCard.variant === 'wet'
+                            ? 'border-sky-500/50 bg-gradient-to-br from-sky-600 via-blue-600 to-blue-700 text-white shadow-lg shadow-sky-500/20'
                             : 'border-border bg-card-alt text-text-secondary shadow-inner'
                             }`}
                     >
                         {statusCard.variant === 'wet' && (
-                            <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(255,255,255,0.35),transparent)] opacity-70" />
+                            <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(255,255,255,0.25),transparent_60%)] opacity-80" />
                         )}
-                        <div className="relative z-10 flex flex-col gap-3">
+                        <div className="relative z-10 flex flex-col gap-4">
                             <div className="flex items-start justify-between gap-3">
                                 <div>
                                     <span
-                                        className={`text-[11px] uppercase tracking-wide ${statusCard.variant === 'wet' ? 'text-white/70' : 'text-text-muted'
+                                        className={`text-[11px] uppercase tracking-wide font-medium ${statusCard.variant === 'wet' ? 'text-blue-100/90' : 'text-text-muted'
                                             }`}
                                     >
                                         {statusCard.title}
                                     </span>
-                                    <div className="mt-1 text-lg font-semibold leading-tight text-text">
+                                    <div className="mt-1 text-lg font-bold leading-tight tracking-tight">
                                         {statusCard.headline}
                                     </div>
                                 </div>
                                 {statusCard.rateValue && (
-                                    <div className="flex items-baseline gap-1 text-4xl font-bold tracking-tight text-text">
+                                    <div className="flex items-baseline gap-1 text-4xl font-bold tracking-tight">
                                         <span>{statusCard.rateValue}</span>
                                         {statusCard.rateUnit && (
                                             <span className="text-lg font-medium opacity-80">{statusCard.rateUnit}</span>
@@ -51,35 +52,40 @@ const PrecipitationCard = ({ loading, statusCard, summaryCards }) => {
                                     </div>
                                 )}
                             </div>
+
                             {statusCard.description && (
                                 <p
-                                    className={`text-sm leading-relaxed ${statusCard.variant === 'wet' ? 'text-white/80' : 'text-text-secondary'
+                                    className={`text-sm leading-relaxed ${statusCard.variant === 'wet' ? 'text-blue-50/90' : 'text-text-secondary'
                                         }`}
                                 >
                                     {statusCard.description}
                                 </p>
                             )}
+
                             {statusCard.metrics.length > 0 && (
-                                <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                                <div className="grid grid-cols-2 gap-3 mt-1">
                                     {statusCard.metrics.map((metric) => (
                                         <div
                                             key={metric.id}
-                                            className={`rounded-xl border px-3 py-3 transition ${statusCard.variant === 'wet'
-                                                ? 'border-white/20 bg-white/10 text-white/90'
+                                            className={`rounded-xl border backdrop-blur-md px-3 py-3 transition-all ${statusCard.variant === 'wet'
+                                                ? 'border-white/20 bg-white/10 text-white shadow-sm'
                                                 : 'border-border bg-card text-text-secondary'
                                                 }`}
                                         >
                                             <div
-                                                className={`text-[11px] uppercase tracking-wide ${statusCard.variant === 'wet' ? 'text-white/70' : 'text-text-muted'
+                                                className={`flex items-center gap-1.5 text-[11px] uppercase tracking-wide font-medium ${statusCard.variant === 'wet' ? 'text-blue-100/80' : 'text-text-muted'
                                                     }`}
                                             >
-                                                {metric.label}
+                                                {metric.id === 'duration' && <FiClock className="text-base opacity-90" />}
+                                                {metric.id === 'total' && <FiDroplet className="text-base opacity-90" />}
+                                                <span>{metric.label}</span>
                                             </div>
-                                            <div className="mt-1 flex items-baseline gap-1 text-base font-semibold text-text">
+
+                                            <div className="mt-1.5 flex items-baseline gap-1 text-xl font-bold tracking-tight">
                                                 <span>{metric.value}</span>
                                                 {metric.unit && (
                                                     <span
-                                                        className={`text-xs font-medium ${statusCard.variant === 'wet' ? 'text-white/70' : 'text-text-muted'
+                                                        className={`text-xs font-medium ${statusCard.variant === 'wet' ? 'text-blue-100/80' : 'text-text-muted'
                                                             }`}
                                                     >
                                                         {metric.unit}
@@ -88,7 +94,7 @@ const PrecipitationCard = ({ loading, statusCard, summaryCards }) => {
                                             </div>
                                             {metric.helper && (
                                                 <div
-                                                    className={`mt-1 text-[11px] ${statusCard.variant === 'wet' ? 'text-white/60' : 'text-text-muted'
+                                                    className={`mt-1 text-[11px] font-medium leading-tight ${statusCard.variant === 'wet' ? 'text-blue-100/60' : 'text-text-muted'
                                                         }`}
                                                 >
                                                     {metric.helper}
@@ -98,9 +104,10 @@ const PrecipitationCard = ({ loading, statusCard, summaryCards }) => {
                                     ))}
                                 </div>
                             )}
+
                             {statusCard.lastRadar && (
                                 <div
-                                    className={`text-xs ${statusCard.variant === 'wet' ? 'text-white/70' : 'text-text-muted'
+                                    className={`text-xs mt-1 ${statusCard.variant === 'wet' ? 'text-blue-100/70' : 'text-text-muted'
                                         }`}
                                 >
                                     {t('precip.last_update')} {statusCard.lastRadar}
@@ -145,7 +152,7 @@ const PrecipitationCard = ({ loading, statusCard, summaryCards }) => {
                         <span className="uppercase tracking-wide">{t('precip.radar_title')}</span>
                         <span className="text-text-muted">{t('precip.source')}</span>
                     </div>
-                    <RadarMap embedded />
+                    <RadarMap embedded lastUpdate={lastUpdate} />
                 </section>
             </div>
         </div>

@@ -2,12 +2,13 @@
 const API_BASE = 'https://api.open-meteo.com/v1/forecast';
 
 /**
- * Fetch 7-day forecast from Open-Meteo
+ * Fetch forecast from Open-Meteo
  * @param {number} lat - Latitude
  * @param {number} lon - Longitude
+ * @param {string} [model='auto'] - Weather model to use
  * @returns {Promise<Object>} Forecast data
  */
-export async function fetchForecast(lat, lon) {
+export async function fetchForecast(lat, lon, model = 'auto') {
     if (!lat || !lon) return null;
 
     const url = new URL(API_BASE);
@@ -15,7 +16,15 @@ export async function fetchForecast(lat, lon) {
     url.searchParams.set('longitude', lon);
     url.searchParams.set('hourly', 'temperature_2m,weather_code,precipitation_probability');
     url.searchParams.set('timezone', 'auto');
-    url.searchParams.set('models', 'meteofrance_seamless');
+
+    // Set model if not auto
+    if (model && model !== 'auto') {
+        url.searchParams.set('models', model);
+    }
+    // If auto, we don't set 'models', Open-Meteo uses best_match by default, 
+    // OR native default which is usually what we want. 
+    // HOWEVER, the user previous code had 'meteofrance_seamless' hardcoded.
+    // If the user wants 'auto' to mean 'best possible for location', omitting 'models' is correct.
 
     try {
         const res = await fetch(url.toString());
@@ -126,8 +135,11 @@ function formatForecastData(data) {
             precipProb: precipitation_probability[i]
         }));
 
-        // Only add if we have at least one period (or future dates)
-        if (morning || afternoon) {
+        // Check if we have valid data for all hours (no nulls)
+        const hasValidData = value.allIndices.every(i => temperature_2m[i] !== null && temperature_2m[i] !== undefined);
+
+        // Only add if we have BOTH morning AND afternoon periods AND full day data (24h) AND valid values
+        if (morning && afternoon && value.allIndices.length >= 24 && hasValidData) {
             dailyForecasts.push({
                 date: value.date,
                 dayTempMin,
@@ -139,7 +151,7 @@ function formatForecastData(data) {
         }
     });
 
-    return dailyForecasts.slice(0, 7);
+    return dailyForecasts.slice(0, 16);
 }
 
 /**
