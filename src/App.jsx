@@ -13,6 +13,7 @@ import SunMoonCard from './components/SunMoonCard'
 import SettingsPage from './components/SettingsPage'
 
 import { fetchCurrentObservation, fetchHourly, fetchHourly7Day, fetchSunTimes, fetchPrecipHistoryDays, fetchMoonInfo, getNextMoonPhases } from './api/weather.js'
+import { fetchTodayNormals } from './api/openMeteo.js'
 import { formatDateTime, formatDecimal, formatDuration } from './utils/formatters'
 import heroCover from '/header.jpeg'
 import PullToRefresh from './components/ui/PullToRefresh'
@@ -100,6 +101,7 @@ function AppContent() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
   const [lastUpdate, setLastUpdate] = useState(null)
+  const [todayNormals, setTodayNormals] = useState(null)
   const [rain7d, setRain7d] = useState(null)
   const [rain30d, setRain30d] = useState(null)
   const [rainLoading, setRainLoading] = useState(false)
@@ -222,14 +224,16 @@ function AppContent() {
         try {
           const tomorrow = new Date()
           tomorrow.setDate(tomorrow.getDate() + 1)
-          const [s, sTomorrow, m] = await Promise.all([
+          const [s, sTomorrow, m, normals] = await Promise.all([
             fetchSunTimes(curr.lat, curr.lon),
             fetchSunTimes(curr.lat, curr.lon, tomorrow),
             fetchMoonInfo(curr.lat, curr.lon),
+            fetchTodayNormals(curr.lat, curr.lon),
           ])
           setSun(s)
           setSunTomorrow(sTomorrow)
           setMoon(m)
+          setTodayNormals(normals)
         } catch (_) { /* ignore */ }
       }
 
@@ -603,8 +607,10 @@ function AppContent() {
                       trendLabel={t('weather.trend')}
                       minValue={metricExtremes.temp?.minValue}
                       minTime={metricExtremes.temp?.minTime}
+                      normalMin={todayNormals?.tmin}
                       maxValue={metricExtremes.temp?.maxValue}
                       maxTime={metricExtremes.temp?.maxTime}
+                      normalMax={todayNormals?.tmax}
                     />
                     <WeatherCard
                       type="humidity"

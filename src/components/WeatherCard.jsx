@@ -30,8 +30,10 @@ export default function WeatherCard({
   trendLabel, // Default handled below via translation
   minValue = null,
   minTime = null,
+  normalMin = null,
   maxValue = null,
   maxTime = null,
+  normalMax = null,
   children,
 }) {
   const { t } = useSettings()
@@ -70,6 +72,19 @@ export default function WeatherCard({
   const minTimeFormatted = formatTime(minTime)
   const maxTimeFormatted = formatTime(maxTime)
 
+  const getDiffStyles = (actual, normal) => {
+    const diff = Number(actual) - normal;
+    if (diff > 1.5) return 'bg-rose-500/15 text-rose-600 dark:text-rose-400';
+    if (diff < -1.5) return 'bg-blue-500/15 text-blue-600 dark:text-blue-400';
+    if (Math.abs(diff) <= 0.5) return 'bg-emerald-500/15 text-emerald-600 dark:text-emerald-400';
+    return 'bg-amber-500/15 text-amber-600 dark:text-amber-400';
+  };
+
+  const formatDiff = (actual, normal) => {
+    const diff = Number(actual) - normal;
+    return (diff > 0 ? '+' : '') + diff.toFixed(1) + '°';
+  };
+
   return (
     <div className="bg-card rounded-2xl shadow-soft p-4 sm:p-5 flex flex-col gap-4">
       <div className="flex items-start justify-between gap-4">
@@ -106,15 +121,29 @@ export default function WeatherCard({
 
       <div className="grid grid-cols-2 gap-2 text-sm">
         <div className="rounded-xl border border-border bg-card-alt px-3 py-2">
-          <div className="text-[11px] uppercase tracking-wide text-text-muted">{t('weather.min')}</div>
-          <div className="mt-1 text-base font-semibold text-text">
-            {minFormatted !== null ? (
-              <span>
-                {minFormatted}
-                {unit ? <span className="ml-1 text-xs font-medium text-text-muted">{unit}</span> : null}
-              </span>
-            ) : (
-              <span className="text-text-muted">—</span>
+          <div className="flex items-center justify-between">
+            <div className="text-[11px] uppercase tracking-wide text-text-muted">{t('weather.min')}</div>
+            {normalMin !== null && (
+              <div className="text-[10px] text-text-muted/60 font-medium" title="Normale saisonnière">
+                Norm. {normalMin}°
+              </div>
+            )}
+          </div>
+          <div className="mt-1 flex items-center justify-between">
+            <div className="text-base font-semibold text-text">
+              {minFormatted !== null ? (
+                <span>
+                  {minFormatted}
+                  {unit ? <span className="ml-1 text-xs font-medium text-text-muted">{unit}</span> : null}
+                </span>
+              ) : (
+                <span className="text-text-muted">—</span>
+              )}
+            </div>
+            {normalMin !== null && minValue !== null && (
+              <div className={`text-[10px] font-bold px-1.5 py-0.5 rounded-md shadow-sm whitespace-nowrap ${getDiffStyles(minValue, normalMin)}`} title="Anomalie">
+                {formatDiff(minValue, normalMin)}
+              </div>
             )}
           </div>
           {minTimeFormatted && (
@@ -122,15 +151,29 @@ export default function WeatherCard({
           )}
         </div>
         <div className="rounded-xl border border-border bg-card-alt px-3 py-2">
-          <div className="text-[11px] uppercase tracking-wide text-text-muted">{t('weather.max')}</div>
-          <div className="mt-1 text-base font-semibold text-text">
-            {maxFormatted !== null ? (
-              <span>
-                {maxFormatted}
-                {unit ? <span className="ml-1 text-xs font-medium text-text-muted">{unit}</span> : null}
-              </span>
-            ) : (
-              <span className="text-text-muted">—</span>
+          <div className="flex items-center justify-between">
+            <div className="text-[11px] uppercase tracking-wide text-text-muted">{t('weather.max')}</div>
+            {normalMax !== null && (
+              <div className="text-[10px] text-text-muted/60 font-medium" title="Normale saisonnière">
+                Norm. {normalMax}°
+              </div>
+            )}
+          </div>
+          <div className="mt-1 flex items-center justify-between">
+            <div className="text-base font-semibold text-text">
+              {maxFormatted !== null ? (
+                <span>
+                  {maxFormatted}
+                  {unit ? <span className="ml-1 text-xs font-medium text-text-muted">{unit}</span> : null}
+                </span>
+              ) : (
+                <span className="text-text-muted">—</span>
+              )}
+            </div>
+            {normalMax !== null && maxValue !== null && (
+              <div className={`text-[10px] font-bold px-1.5 py-0.5 rounded-md shadow-sm whitespace-nowrap ${getDiffStyles(maxValue, normalMax)}`} title="Anomalie">
+                {formatDiff(maxValue, normalMax)}
+              </div>
             )}
           </div>
           {maxTimeFormatted && (

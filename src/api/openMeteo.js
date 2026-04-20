@@ -192,3 +192,63 @@ export const getWeatherInfo = (code) => {
         default: return { icon: 'WiNa', label: 'forecast.unknown', style: 'text-text-muted' };
     }
 };
+
+/**
+ * Fetch daily climate normals for a specific location
+ * Calculations are done locally by fetching 30-year history from Open-Meteo.
+ * Results are cached in localStorage to prevent repeated heavy calculations.
+ */
+export async function fetchTodayNormals(lat, lon) {
+    if (!lat || !lon) return null;
+    
+    // Round coords to 2 decimals to create a solid cache key
+    const cacheKey = `normals_${Number(lat).toFixed(2)}_${Number(lon).toFixed(2)}`;
+    const cached = localStorage.getItem(cacheKey);
+    let normalsMap = null;
+    
+    if (cached) {
+        try { normalsMap = JSON.parse(cached); } catch (e) {}
+    }
+
+    if (!normalsMap) {
+        const url = `https://archive-api.open-meteo.com/v1/archive?latitude=${lat}&longitude=${lon}&start_date=1991-01-01&end_date=2020-12-31&daily=temperature_2m_max,temperature_2m_min&timezone=auto`;
+        try {
+            const res = await fetch(url);
+            if (!res.ok) throw new Error("Erreur base historique Open-Meteo");
+            const data = await res.json();
+            
+            const dailyMap = {};
+            data.daily.time.forEach((dateString, i) => {
+                const mmdd = dateString.substring(5, 10);
+                if (!dailyMap[mmdd]) dailyMap[mmdd] = { tmaxSum: 0, tminSum: 0, count: 0 };
+                
+                const tmax = data.daily.temperature_2m_max[i];
+                const tmin = data.daily.temperature_2m_min[i];
+                
+                if (tmax !== null && tmin !== null) {
+                    dailyMap[mmdd].tmaxSum += tmax;
+                    dailyMap[mmdd].tminSum += tmin;
+                    dailyMap[mmdd].count += 1;
+                }
+            });
+            
+            normalsMap = {};
+            for (const [mmdd, stats] of Object.entries(dailyMap)) {
+                if (stats.count > 0) {
+                    normalsMap[mmdd] = {
+                        tmax: Math.round((stats.tmaxSum / stats.count) * 10) / 10,
+                        tmin: Math.round((stats.tminSum / stats.count) * 10) / 10,
+                    };
+                }
+            }
+            localStorage.setItem(cacheKey, JSON.stringify(normalsMap));
+        } catch (e) {
+            console.error("Impossible de récupérer les normales:", e);
+            return null;
+        }
+    }
+
+    const today = new Date();
+    const mmdd = `${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
+    return normalsMap[mmdd] || null;
+}
