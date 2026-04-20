@@ -3,7 +3,7 @@ import { FiClock, FiDroplet } from 'react-icons/fi';
 import RadarMap from './RadarMap';
 import { useSettings } from '../context/SettingsContext';
 
-const PrecipitationCard = ({ loading, statusCard, summaryCards, lastUpdate }) => {
+const PrecipitationCard = ({ loading, statusCard, summaryCards, monthlyNormals, currentMonthPrecip, lastUpdate }) => {
     const { t } = useSettings();
 
     return (
@@ -146,6 +146,89 @@ const PrecipitationCard = ({ loading, statusCard, summaryCards, lastUpdate }) =>
                         </div>
                     ))}
                 </section>
+
+                {monthlyNormals && monthlyNormals.length === 12 && (
+                    <section className="rounded-2xl border border-border bg-card p-4 sm:p-5">
+                       <div className="flex items-center justify-between mb-3 gap-2">
+                           <div className="text-[10px] sm:text-[11px] uppercase tracking-tight sm:tracking-wide text-text-muted leading-snug">
+                               {t('precip.monthly_normals_title', 'Cumuls mensuels moyens')}
+                           </div>
+                           <div className="flex items-center gap-2 sm:gap-3 text-[9px] sm:text-[10px] text-text-muted shrink-0">
+                               <div className="flex items-center gap-1.5">
+                                   <div className="w-2 h-2 sm:w-2.5 sm:h-2.5 bg-sky-500/20 rounded-[2px]"></div>
+                                   <span>Normale</span>
+                               </div>
+                               {currentMonthPrecip != null && (
+                                   <div className="flex items-center gap-1.5">
+                                       <div className="w-2 h-2 sm:w-2.5 sm:h-2.5 bg-sky-500 shadow-[0_0_4px_rgba(14,165,233,0.5)] rounded-[2px]"></div>
+                                       <span className="hidden sm:inline">Cumul actuel</span>
+                                       <span className="sm:hidden">Actuel</span>
+                                   </div>
+                               )}
+                           </div>
+                       </div>
+                       <div className="overflow-x-auto pb-1 -mx-4 px-4 sm:mx-0 sm:px-0 [&::-webkit-scrollbar]:hidden" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
+                         <div className="flex items-end justify-between h-28 sm:h-32 gap-3 sm:gap-1 min-w-[350px] sm:min-w-full">
+                            {(() => {
+                                const globalMaxVal = Math.max(...monthlyNormals, 1);
+                                
+                                return monthlyNormals.map((val, idx) => {
+                                    const isCurrentMonth = new Date().getMonth() === idx;
+                                    const mtdVal = isCurrentMonth && currentMonthPrecip != null ? currentMonthPrecip : 0;
+                                    const isOverflowing = mtdVal > globalMaxVal;
+                                    
+                                    const heightPct = (val / globalMaxVal) * 100;
+                                    const mtdHeightPct = Math.min((mtdVal / globalMaxVal) * 100, 100);
+
+                                    const monthRaw = new Intl.DateTimeFormat('fr-FR', { month: 'short' }).format(new Date(2024, idx, 1)).replace('.', '');
+                                    const monthName = monthRaw.substring(0, 3);
+                                    const capMonth = monthName.charAt(0).toUpperCase() + monthName.slice(1);
+
+                                    return (
+                                        <div key={idx} className="flex flex-col items-center flex-1 gap-1 group relative">
+                                           <div className="flex flex-col items-center justify-end h-[24px] sm:h-[28px] pb-1 gap-0.5 z-20">
+                                              {isCurrentMonth && currentMonthPrecip != null && (
+                                                 <span className="text-[9px] sm:text-[10px] font-bold text-sky-500 whitespace-nowrap leading-none">
+                                                    {Math.round(currentMonthPrecip)} mm
+                                                 </span>
+                                              )}
+                                              <span className={`text-[9px] sm:text-[10px] whitespace-nowrap leading-none ${isCurrentMonth && currentMonthPrecip != null ? 'text-text-muted/60' : 'text-text-muted'}`}>
+                                                 {val} mm
+                                              </span>
+                                           </div>
+                                           <div className="w-full flex justify-center h-[50px] sm:h-[70px] items-end relative">
+                                          {/* Normal Bar */}
+                                          <div 
+                                             className={`w-full max-w-[12px] sm:max-w-[20px] rounded-t-sm transition-all duration-300 absolute bottom-0 bg-sky-500/20`}
+                                             style={{ height: `${Math.max(heightPct, 5)}%` }}
+                                          />
+                                          {/* MTD Superimposed Bar */}
+                                          {isCurrentMonth && currentMonthPrecip != null && (
+                                             <div 
+                                                className="w-[6px] sm:w-[10px] rounded-t-[2px] transition-all duration-300 absolute bottom-0 bg-sky-500 shadow-[0_0_8px_rgba(14,165,233,0.5)] z-10"
+                                                style={{ height: `${Math.max(mtdHeightPct, 2)}%` }}
+                                                title={`${currentMonthPrecip.toFixed(1)} mm du 1er à aujourd'hui`}
+                                             >
+                                                {isOverflowing && (
+                                                    <div className="absolute top-1.5 left-1/2 -translate-x-1/2 w-[14px] sm:w-[20px] h-[6px] sm:h-[8px] -rotate-12 flex flex-col justify-between pointer-events-none">
+                                                        <div className="w-full h-[2px] bg-card"></div>
+                                                        <div className="w-full h-[2px] bg-card"></div>
+                                                    </div>
+                                                )}
+                                             </div>
+                                          )}
+                                       </div>
+                                       <span className={`text-[10px] sm:text-[11px] font-semibold ${isCurrentMonth ? 'text-sky-500' : 'text-text-muted'}`}>
+                                          {capMonth}
+                                       </span>
+                                    </div>
+                                )
+                            })
+                            })()}
+                         </div>
+                       </div>
+                    </section>
+                )}
 
                 <section className="overflow-hidden rounded-2xl border border-border bg-card">
                     <div className="flex items-center justify-between border-b border-border px-4 py-3 text-xs text-text-secondary">

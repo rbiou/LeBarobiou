@@ -13,7 +13,7 @@ import SunMoonCard from './components/SunMoonCard'
 import SettingsPage from './components/SettingsPage'
 
 import { fetchCurrentObservation, fetchHourly, fetchHourly7Day, fetchSunTimes, fetchPrecipHistoryDays, fetchMoonInfo, getNextMoonPhases } from './api/weather.js'
-import { fetchTodayNormals } from './api/openMeteo.js'
+import { fetchTodayNormals, fetchMonthlyPrecipNormals } from './api/openMeteo.js'
 import { formatDateTime, formatDecimal, formatDuration } from './utils/formatters'
 import heroCover from '/header.jpeg'
 import PullToRefresh from './components/ui/PullToRefresh'
@@ -102,6 +102,8 @@ function AppContent() {
   const [error, setError] = useState(null)
   const [lastUpdate, setLastUpdate] = useState(null)
   const [todayNormals, setTodayNormals] = useState(null)
+  const [monthlyPrecipNormals, setMonthlyPrecipNormals] = useState(null)
+  const [rainMtd, setRainMtd] = useState(null)
   const [rain7d, setRain7d] = useState(null)
   const [rain30d, setRain30d] = useState(null)
   const [rainLoading, setRainLoading] = useState(false)
@@ -179,6 +181,7 @@ function AppContent() {
         if (start7) start7.setDate(start7.getDate() - 6)
 
         let rain7Sum = null
+        let rainMtdSum = null
         if (start7) {
           rain7Sum = mappedHistory.reduce((sum, entry) => {
             const dayStart = getParisStartOfDay(entry.ts)
@@ -186,7 +189,17 @@ function AppContent() {
             return sum + (Number(entry.precipTotal) || 0)
           }, 0)
         }
+        if (parisToday) {
+          const startOfMonth = new Date(parisToday)
+          startOfMonth.setDate(1) // 1st of month
+          rainMtdSum = mappedHistory.reduce((sum, entry) => {
+            const dayStart = getParisStartOfDay(entry.ts)
+            if (!dayStart || dayStart < startOfMonth) return sum
+            return sum + (Number(entry.precipTotal) || 0)
+          }, 0)
+        }
         setRain7d(rain7Sum != null && Number.isFinite(rain7Sum) ? rain7Sum : null)
+        setRainMtd(rainMtdSum != null && Number.isFinite(rainMtdSum) ? rainMtdSum : null)
 
         const gustFromHistory = (days) => {
           if (!parisToday) return { value: null, when: null }
@@ -224,16 +237,23 @@ function AppContent() {
         try {
           const tomorrow = new Date()
           tomorrow.setDate(tomorrow.getDate() + 1)
-          const [s, sTomorrow, m, normals] = await Promise.all([
+          const [s, sTomorrow, m, normals, precipNormals] = await Promise.all([
             fetchSunTimes(curr.lat, curr.lon),
             fetchSunTimes(curr.lat, curr.lon, tomorrow),
             fetchMoonInfo(curr.lat, curr.lon),
             fetchTodayNormals(curr.lat, curr.lon),
+            fetchMonthlyPrecipNormals(curr.lat, curr.lon),
           ])
           setSun(s)
           setSunTomorrow(sTomorrow)
           setMoon(m)
           setTodayNormals(normals)
+          setMonthlyPrecipNormals(precipNormals)
+          
+          if (precipNormals && precipNormals.length === 12) {
+             const currentMonthIdx = new Date().getMonth()
+             setRainMtd(precipNormals[currentMonthIdx] * 0.8) // MOCK 80%
+          }
         } catch (_) { /* ignore */ }
       }
 
@@ -655,6 +675,8 @@ function AppContent() {
                     loading={rainLoading}
                     statusCard={precipStatusCard}
                     summaryCards={rainSummaryCards}
+                    monthlyNormals={monthlyPrecipNormals}
+                    currentMonthPrecip={rainMtd}
                     lastUpdate={lastUpdate}
                   />
                 )

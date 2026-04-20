@@ -252,3 +252,45 @@ export async function fetchTodayNormals(lat, lon) {
     const mmdd = `${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
     return normalsMap[mmdd] || null;
 }
+
+/**
+ * Fetch monthly precipitation climate normals
+ * Calculations are done locally by sum/averaging 30-year history
+ */
+export async function fetchMonthlyPrecipNormals(lat, lon) {
+    if (!lat || !lon) return null;
+    
+    const cacheKey = `monthly_precip_${Number(lat).toFixed(2)}_${Number(lon).toFixed(2)}`;
+    const cached = localStorage.getItem(cacheKey);
+    
+    if (cached) {
+        try { return JSON.parse(cached); } catch (e) {}
+    }
+
+    const url = `https://archive-api.open-meteo.com/v1/archive?latitude=${lat}&longitude=${lon}&start_date=1991-01-01&end_date=2020-12-31&daily=precipitation_sum&timezone=auto`;
+    try {
+        const res = await fetch(url);
+        if (!res.ok) throw new Error("Erreur base historique Open-Meteo pour les precipitations");
+        const data = await res.json();
+        
+        const monthlySumMap = Array(12).fill(0);
+        
+        data.daily.time.forEach((dateString, i) => {
+            const mm = parseInt(dateString.substring(5, 7), 10) - 1;
+            const precip = data.daily.precipitation_sum[i];
+            
+            if (precip !== null) {
+                monthlySumMap[mm] += precip;
+            }
+        });
+        
+        // Sum across 30 years -> Monthly average is sum / 30
+        const monthlyAverages = monthlySumMap.map(sum => Math.round(sum / 30));
+        
+        localStorage.setItem(cacheKey, JSON.stringify(monthlyAverages));
+        return monthlyAverages;
+    } catch (e) {
+        console.error("Impossible de récupérer les normales de precipitations:", e);
+        return null;
+    }
+}
