@@ -577,35 +577,56 @@ function AppContent() {
 
   return (
     <div className="min-h-screen bg-bg text-text transition-colors duration-300">
-      <header className="relative z-10 pt-4 sm:pt-6">
-        <div className="mx-auto container-max px-4">
-          <div className="relative overflow-hidden rounded-3xl border border-white/10 bg-slate-900/80 shadow-soft">
+      <header className="px-0 sm:px-4 pt-0 sm:pt-6">
+        <div className="mx-auto container-max">
+          <div className="relative overflow-hidden sm:rounded-[2.5rem] shadow-lg group h-[220px] sm:h-[280px] lg:h-[320px] bg-slate-900 border-b sm:border border-white/10">
+            {/* Dynamic Banner Image */}
             <img
               src={heroCover}
               alt="Couverture Le Barobiou"
-              className="absolute inset-0 h-full w-full object-cover opacity-90"
+              className="absolute inset-0 h-full w-full object-cover opacity-90 transition-transform duration-1000 ease-out group-hover:scale-105"
               loading="lazy"
             />
-            <div className="absolute inset-0 bg-gradient-to-r from-slate-900/50 via-slate-900/10 to-transparent" />
+            
+            {/* Cinema Gradients */}
+            <div className="absolute inset-x-0 bottom-0 h-2/3 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
+            <div className="absolute inset-x-0 top-0 h-1/3 bg-gradient-to-b from-black/40 to-transparent" />
 
-            <div className="relative px-6 py-8 sm:px-10 sm:py-12 flex items-center justify-between">
-              <div>
-                <h1 className="text-2xl font-semibold text-white sm:text-3xl">Le Barobiou</h1>
-                <div className="mt-1 flex items-center gap-2 text-xs font-medium text-white/60">
-                  <span>{t('app.lastUpdate')} : {formatDateTime(lastUpdate, locale)}</span>
-                </div>
-              </div>
-
-              <div className="flex items-center gap-3">
-                {canInstall && (
+            {/* Content Container (with Safe Area for PWAs) */}
+            <div className="absolute inset-0 flex flex-col justify-between p-5 sm:p-8 lg:p-10" style={{ paddingTop: 'max(1.5rem, env(safe-area-inset-top))' }}>
+               
+               {/* Top Bar: Settings & Install */}
+               <div className="flex justify-end gap-3 w-full">
+                 {canInstall && (
+                    <button
+                      onClick={promptInstall}
+                      className="rounded-full bg-black/20 px-4 py-2 sm:px-5 sm:py-2.5 text-[10px] sm:text-xs font-bold text-white uppercase tracking-wider backdrop-blur-md border border-white/10 transition-all hover:bg-black/40 hover:scale-105 active:scale-95 shadow-sm"
+                    >
+                      {t('app.install')}
+                    </button>
+                  )}
                   <button
-                    onClick={promptInstall}
-                    className="hidden sm:block rounded-full bg-white/20 px-4 py-1.5 text-xs font-medium text-white backdrop-blur-md transition hover:bg-white/30"
+                    onClick={() => setCurrentPage('settings')}
+                    className="flex justify-center items-center rounded-full bg-black/20 p-2.5 sm:p-3 text-white backdrop-blur-md border border-white/10 transition-all hover:bg-black/40 hover:scale-105 active:scale-95 shadow-sm"
+                    title={t('settings.title')}
                   >
-                    {t('app.install')}
+                    <FiSettings className="text-lg sm:text-xl transition-transform duration-500 hover:rotate-90" />
                   </button>
-                )}
-              </div>
+               </div>
+
+               {/* Bottom Bar: App Name & Pulse Status */}
+               <div className="flex flex-col gap-1 sm:gap-2">
+                  <h1 className="text-5xl sm:text-6xl lg:text-7xl font-black tracking-tighter text-white drop-shadow-xl translate-y-1 sm:translate-y-2 group-hover:translate-y-0 transition-transform duration-700 ease-out">
+                    Le Barobiou<span className="text-primary opacity-90">.</span>
+                  </h1>
+                  <div className="flex items-center gap-2 text-[10px] sm:text-[11px] font-bold uppercase tracking-widest text-white/80 drop-shadow-md pb-1 sm:pb-0">
+                    <span className="relative flex h-2 w-2">
+                      <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                      <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.8)]"></span>
+                    </span>
+                    <span>{t('app.lastUpdate')} : {formatDateTime(lastUpdate, locale)}</span>
+                  </div>
+               </div>
             </div>
           </div>
         </div>
