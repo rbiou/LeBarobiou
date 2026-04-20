@@ -36,7 +36,7 @@ export default function RadarMap({ embedded = false, lastUpdate } = {}) {
 
         const loadFrames = async () => {
             try {
-                const response = await fetch('https://tilecache.rainviewer.com/api/maps.json', {
+                const response = await fetch('https://api.rainviewer.com/public/weather-maps.json', {
                     mode: 'cors',
                     cache: 'no-cache',
                     credentials: 'omit',
@@ -44,30 +44,30 @@ export default function RadarMap({ embedded = false, lastUpdate } = {}) {
                 if (!response.ok) throw new Error(`RainViewer maps.json ${response.status}`)
 
                 const payload = await response.json()
+                const host = payload.host || 'https://tilecache.rainviewer.com'
 
-                const timestamps = Array.isArray(payload)
-                    ? payload
-                    : [
-                        ...(Array.isArray(payload?.radar?.past) ? payload.radar.past.map((f) => f.time ?? f) : []),
-                        ...(Array.isArray(payload?.radar?.nowcast) ? payload.radar.nowcast.map((f) => f.time ?? f) : []),
+                let rawFrames = []
+                if (Array.isArray(payload)) {
+                    rawFrames = payload.map(time => ({ time, path: `/v2/radar/${time}` }))
+                } else {
+                    rawFrames = [
+                        ...(Array.isArray(payload?.radar?.past) ? payload.radar.past : []),
+                        ...(Array.isArray(payload?.radar?.nowcast) ? payload.radar.nowcast : []),
                     ]
+                }
 
-                const framesList = [...new Set(
-                    timestamps
-                        .map((value) => {
-                            if (typeof value === 'number') return value
-                            if (typeof value === 'string') {
-                                const parsed = Number(value)
-                                return Number.isFinite(parsed) ? parsed : null
-                            }
-                            return null
-                        })
-                        .filter((value) => value != null)
-                )]
-                    .sort((a, b) => a - b)
-                    .map((time) => ({
-                        time,
-                        url: `https://tilecache.rainviewer.com/v2/radar/${time}/256/{z}/{x}/{y}/2/1_1.png`,
+                const framesList = rawFrames
+                    .filter((f) => f && (typeof f.time === 'number' || typeof f.time === 'string'))
+                    .map((f) => ({
+                        time: Number(f.time),
+                        path: f.path || `/v2/radar/${f.time}`
+                    }))
+                    .filter((f) => !isNaN(f.time))
+                    .sort((a, b) => a.time - b.time)
+                    .filter((f, index, self) => index === self.findIndex((t) => t.time === f.time))
+                    .map((f) => ({
+                        time: f.time,
+                        url: `${host}${f.path}/256/{z}/{x}/{y}/2/1_1.png`,
                     }))
 
                 if (isMounted) {
@@ -184,10 +184,11 @@ export default function RadarMap({ embedded = false, lastUpdate } = {}) {
     return (
         <div className={wrapperClasses}>
             <div className="relative z-0 overflow-hidden rounded-xl bg-slate-100 dark:bg-slate-900" style={{ height: mapHeight, width: '100%' }}>
-                <MapContainer center={centerAigre} zoom={8} style={{ height: '100%', width: '100%' }}>
+                <MapContainer key="radar-map-container" center={centerAigre} zoom={8} maxZoom={18} style={{ height: '100%', width: '100%' }}>
                     <TileLayer
                         url={tileUrl}
                         attribution={attribution}
+                        maxZoom={18}
                     />
                     <Marker position={centerAigre}>
                         <Popup>Aigre (16140, France)</Popup>
@@ -198,6 +199,8 @@ export default function RadarMap({ embedded = false, lastUpdate } = {}) {
                             url={frames[currentFrameIndex].url}
                             opacity={0.7}
                             attribution="Radar: RainViewer"
+                            maxNativeZoom={7}
+                            maxZoom={18}
                         />
                     )}
                     {showLightning && (
@@ -206,6 +209,8 @@ export default function RadarMap({ embedded = false, lastUpdate } = {}) {
                             url={lightningTileUrl}
                             opacity={0.8}
                             attribution="Lightning: RainViewer"
+                            maxNativeZoom={7}
+                            maxZoom={18}
                         />
                     )}
                 </MapContainer>
