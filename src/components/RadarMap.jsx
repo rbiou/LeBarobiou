@@ -174,12 +174,10 @@ export default function RadarMap({ embedded = false, lastUpdate } = {}) {
     const mapHeight = embedded ? 'min(60vh, 360px)' : '400px'
     const lightningTileUrl = 'https://tilecache.rainviewer.com/v2/lightning/latest/256/{z}/{x}/{y}.png'
 
-    // CartoDB - Positron (Light) & Dark Matter (Dark)
-    const tileUrl = isDark
-        ? 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png'
-        : 'https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png'
+    // OpenStreetMap France (French localized names)
+    const tileUrl = 'https://{s}.tile.openstreetmap.fr/osmfr/{z}/{x}/{y}.png'
 
-    const attribution = '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>'
+    const attribution = '&copy; OpenStreetMap France | &copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
 
     return (
         <div className={wrapperClasses}>
@@ -189,6 +187,7 @@ export default function RadarMap({ embedded = false, lastUpdate } = {}) {
                         url={tileUrl}
                         attribution={attribution}
                         maxZoom={18}
+                        className="map-tiles-fr"
                     />
                     <Marker position={centerAigre}>
                         <Popup>Aigre (16140, France)</Popup>
