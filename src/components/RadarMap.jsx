@@ -192,16 +192,16 @@ export default function RadarMap({ embedded = false, lastUpdate } = {}) {
                     <Marker position={centerAigre}>
                         <Popup>Aigre (16140, France)</Popup>
                     </Marker>
-                    {frames.length > 0 && (
+                    {frames.length > 0 && frames.map((frame, index) => (
                         <TileLayer
-                            key={`radar-${frames[currentFrameIndex].time}`}
-                            url={frames[currentFrameIndex].url}
-                            opacity={0.7}
-                            attribution="Radar: RainViewer"
+                            key={`radar-${frame.time}`}
+                            url={frame.url}
+                            opacity={index === currentFrameIndex ? 0.7 : 0}
+                            attribution={index === 0 ? "Radar: RainViewer" : ""}
                             maxNativeZoom={7}
                             maxZoom={18}
                         />
-                    )}
+                    ))}
                     {showLightning && (
                         <TileLayer
                             key="lightning-overlay"
