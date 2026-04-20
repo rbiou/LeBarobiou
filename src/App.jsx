@@ -249,11 +249,6 @@ function AppContent() {
           setMoon(m)
           setTodayNormals(normals)
           setMonthlyPrecipNormals(precipNormals)
-          
-          if (precipNormals && precipNormals.length === 12) {
-             const currentMonthIdx = new Date().getMonth()
-             setRainMtd(precipNormals[currentMonthIdx] * 0.8) // MOCK 80%
-          }
         } catch (_) { /* ignore */ }
       }
 
@@ -442,9 +437,24 @@ function AppContent() {
 
     let startIdx = null
     let endIdx = arr.length - 1
+    let rainEventStarted = false
+    let lastRainTs = null
+    const MAX_DRY_MINUTES = 45 // Tolérance sans précipitations avant de considérer l'épisode terminé
+    
     for (let i = arr.length - 1; i >= 0; i--) {
       const p = Number(arr[i]?.precip) || 0
-      if (p > 0) { startIdx = i } else if (startIdx !== null) { break }
+      const pointTs = new Date(arr[i].ts).getTime()
+      
+      if (p > 0) { 
+        startIdx = i 
+        rainEventStarted = true
+        lastRainTs = pointTs
+      } else if (rainEventStarted) {
+        const dryDurationMs = lastRainTs - pointTs
+        if (dryDurationMs > MAX_DRY_MINUTES * 60 * 1000) {
+          break
+        }
+      }
     }
 
     let eventSum = 0
@@ -492,6 +502,7 @@ function AppContent() {
       headline: isRaining ? t('precip.status.wet') + ' 🌧️' : t('precip.status.dry'),
       description: statusDescription,
       lastRadar: lastRadarLabel,
+      todayTotal: hasHourlyData ? formatDecimal(precipAgg.last24, locale) : null,
       rateValue: displayPrecipRate != null ? formatDecimal(displayPrecipRate, locale) : null,
       rateUnit: displayPrecipRate != null ? 'mm/h' : null,
       metrics: [],
@@ -520,22 +531,20 @@ function AppContent() {
         },
       ],
     }
-  }, [isRaining, statusDescription, lastRadarLabel, displayPrecipRate, eventDurationHours, precipAgg.eventSum, t])
+  }, [isRaining, statusDescription, lastRadarLabel, displayPrecipRate, eventDurationHours, precipAgg.eventSum, precipAgg.last24, hasHourlyData, locale, t])
 
   const rainSummaryCards = useMemo(() => {
-    const todayValue = hasHourlyData ? formatDecimal(precipAgg.last24, locale) : null
     return [
-      {
-        key: 'today',
-        badge: t('precip.cumToday'),
-        value: todayValue,
-        helper: t('precip.sinceMidnight'),
-      },
       {
         key: '7d',
         badge: t('precip.cum7d'),
         value: rain7d != null ? formatDecimal(rain7d) : null,
         helper: t('precip.last7days'),
+      },
+      {
+        key: 'month',
+        badge: t('precip.cumMonth', 'Ce mois'),
+        value: rainMtd != null ? formatDecimal(rainMtd, locale) : null,
       },
       {
         key: '30d',
@@ -544,7 +553,7 @@ function AppContent() {
         helper: t('precip.last30days'),
       },
     ]
-  }, [precipAgg, hasHourlyData, rain7d, rain30d, t])
+  }, [rainMtd, rain7d, rain30d, locale, t])
 
   const chartData = useMemo(() => {
     if (chartRange === 'day') return hourly
