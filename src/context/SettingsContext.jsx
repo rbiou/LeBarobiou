@@ -66,7 +66,6 @@ function loadSettings() {
                     ...defaultSettings,
                     ...parsed,
                     blocs: { ...defaultSettings.blocs, ...(parsed.blocs || {}) },
-                    blocs: { ...defaultSettings.blocs, ...(parsed.blocs || {}) },
                     blocOrder: (() => {
                         const savedOrder = Array.isArray(parsed.blocOrder) ? parsed.blocOrder : []
                         // If forecast is missing (new feature), add it to the start

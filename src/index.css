@@ -1,22 +1,54 @@
+@import "tw-animate-css";
+@import "shadcn/tailwind.css";
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 @layer base {
   :root {
+    /* ========== shadcn semantic tokens — slate + sky (LeBarobiou identity) ========== */
+    --background: 248 250 252; /* slate-50 */
+    --foreground: 15 23 42; /* slate-900 */
+    --card: 255 255 255; /* white */
+    --card-foreground: 15 23 42; /* slate-900 */
+    --popover: 255 255 255;
+    --popover-foreground: 15 23 42;
+    --primary: 14 165 233; /* sky-500 */
+    --primary-foreground: 255 255 255;
+    --secondary: 241 245 249; /* slate-100 */
+    --secondary-foreground: 71 85 105; /* slate-600 */
+    --muted: 241 245 249; /* slate-100 */
+    --muted-foreground: 100 116 139; /* slate-500 */
+    --accent: 241 245 249; /* slate-100 */
+    --accent-foreground: 15 23 42; /* slate-900 */
+    --destructive: 244 63 94; /* rose-500 */
+    --destructive-foreground: 255 255 255;
+    --border: 226 232 240; /* slate-200 */
+    --input: 226 232 240; /* slate-200 */
+    --ring: 14 165 233; /* sky-500 */
+    --radius: 0.625rem;
+    --chart-1: 14 165 233; /* sky-500 */
+    --chart-2: 245 158 11; /* amber-500 */
+    --chart-3: 244 63 94; /* rose-500 */
+    --chart-4: 99 102 241; /* indigo-500 */
+    --chart-5: 16 185 129; /* emerald-500 */
+    --sidebar: 255 255 255;
+    --sidebar-foreground: 15 23 42;
+    --sidebar-primary: 14 165 233;
+    --sidebar-primary-foreground: 255 255 255;
+    --sidebar-accent: 241 245 249;
+    --sidebar-accent-foreground: 15 23 42;
+    --sidebar-border: 226 232 240;
+    --sidebar-ring: 14 165 233;
+
+    /* ========== Legacy tokens (temporary — removed after migration to shadcn tokens) ========== */
     --bg-main: 248 250 252; /* slate-50 */
     --bg-card: 255 255 255; /* white */
     --bg-card-alt: 241 245 249; /* slate-100 */
-    
     --text-main: 15 23 42; /* slate-900 */
     --text-secondary: 71 85 105; /* slate-600 */
     --text-muted: 148 163 184; /* slate-400 */
-    
     --border-soft: 226 232 240; /* slate-200 */
-    
-    --primary: 14 165 233; /* sky-500 */
-    --primary-foreground: 255 255 255;
-    
     --accent-sky: 14 165 233;
     --accent-blue: 37 99 235;
     --accent-amber: 245 158 11;
@@ -25,25 +57,67 @@
   }
 
   .dark {
+    --background: 15 23 42; /* slate-900 */
+    --foreground: 248 250 252; /* slate-50 */
+    --card: 30 41 59; /* slate-800 */
+    --card-foreground: 248 250 252;
+    --popover: 30 41 59; /* slate-800 */
+    --popover-foreground: 248 250 252;
+    --primary: 56 189 248; /* sky-400 */
+    --primary-foreground: 15 23 42; /* slate-900 */
+    --secondary: 51 65 85; /* slate-700 */
+    --secondary-foreground: 248 250 252;
+    --muted: 51 65 85; /* slate-700 */
+    --muted-foreground: 148 163 184; /* slate-400 */
+    --accent: 51 65 85; /* slate-700 */
+    --accent-foreground: 248 250 252;
+    --destructive: 251 113 133; /* rose-400 */
+    --destructive-foreground: 15 23 42;
+    --border: 51 65 85; /* slate-700 */
+    --input: 51 65 85; /* slate-700 */
+    --ring: 56 189 248; /* sky-400 */
+    --chart-1: 56 189 248; /* sky-400 */
+    --chart-2: 251 191 36; /* amber-400 */
+    --chart-3: 251 113 133; /* rose-400 */
+    --chart-4: 129 140 248; /* indigo-400 */
+    --chart-5: 52 211 153; /* emerald-400 */
+    --sidebar: 30 41 59;
+    --sidebar-foreground: 248 250 252;
+    --sidebar-primary: 56 189 248;
+    --sidebar-primary-foreground: 15 23 42;
+    --sidebar-accent: 51 65 85;
+    --sidebar-accent-foreground: 248 250 252;
+    --sidebar-border: 51 65 85;
+    --sidebar-ring: 56 189 248;
+
+    /* Legacy tokens (temporary — removed after migration) */
     --bg-main: 15 23 42; /* slate-900 */
     --bg-card: 30 41 59; /* slate-800 */
     --bg-card-alt: 51 65 85; /* slate-700 */
-    
     --text-main: 248 250 252; /* slate-50 */
     --text-secondary: 203 213 225; /* slate-300 */
     --text-muted: 148 163 184; /* slate-400 */
-    
     --border-soft: 51 65 85; /* slate-700 */
-    
-    --primary: 56 189 248; /* sky-400 */
-    --primary-foreground: 15 23 42;
-
-    /* Neon Accents for Dark Mode */
     --accent-sky: 56 189 248;
     --accent-blue: 96 165 250;
     --accent-amber: 251 191 36;
     --accent-rose: 251 113 133;
     --accent-indigo: 129 140 248;
+  }
+
+  .theme {
+    --font-heading: var(--font-sans);
+    --font-sans: 'Inter', system-ui, Arial, sans-serif;
+  }
+
+  * {
+    @apply border-border outline-ring/50;
+  }
+  body {
+    @apply bg-background text-foreground;
+  }
+  html {
+    @apply font-sans;
   }
 }
 
