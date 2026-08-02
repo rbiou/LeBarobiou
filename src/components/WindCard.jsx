@@ -1,5 +1,6 @@
 import React from 'react';
 import { useSettings } from '../context/SettingsContext';
+import { Card, CardContent } from './ui/card';
 
 const WindCard = ({ current, windExtra, gustToday, gust7d, gust30d }) => {
     const { t } = useSettings();
@@ -7,14 +8,14 @@ const WindCard = ({ current, windExtra, gustToday, gust7d, gust30d }) => {
     const fmtTime = (d) => d ? new Date(d).toLocaleString('fr-FR', { hour: '2-digit', minute: '2-digit', day: '2-digit', month: '2-digit' }) : '';
 
     const Item = ({ label, data, showTime = false, showDateOnly = false }) => (
-        <div className="px-3 py-2 rounded-xl bg-card-alt border border-border">
-            <div className="text-xs text-text-muted">{label}</div>
-            <div className="text-base font-semibold text-text">
-                {fmtVal(data.value)} <span className="text-text-muted text-sm">{t('wind.unit')}</span>
+        <div className="px-3 py-2 rounded-xl bg-muted border border-border">
+            <div className="text-xs text-muted-foreground">{label}</div>
+            <div className="text-base font-semibold text-foreground">
+                {fmtVal(data.value)} <span className="text-muted-foreground text-sm">{t('wind.unit')}</span>
             </div>
-            {showTime && data.when ? <div className="text-[11px] text-text-muted">{fmtTime(data.when)}</div> : null}
+            {showTime && data.when ? <div className="text-[11px] text-muted-foreground">{fmtTime(data.when)}</div> : null}
             {showDateOnly && data.when ? (
-                <div className="text-[11px] text-text-muted">
+                <div className="text-[11px] text-muted-foreground">
                     {new Date(data.when).toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit', year: 'numeric' })}
                 </div>
             ) : null}
@@ -22,26 +23,28 @@ const WindCard = ({ current, windExtra, gustToday, gust7d, gust30d }) => {
     );
 
     return (
-        <div className="rounded-2xl bg-card p-4 shadow-soft sm:p-5 sm:col-span-2 lg:col-span-3">
-            <div className="flex items-center justify-between mb-2">
-                <div className="text-sm font-medium text-text-secondary">{t('wind.title')}</div>
-                <div className="text-xs text-text-muted">{t('wind.subtitle')}</div>
-            </div>
-            <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-3">
-                <div>
-                    <div className="text-5xl font-semibold tracking-tight text-text">
-                        {current?.windSpeed != null ? Number(current.windSpeed).toFixed(1) : '—'}
-                        <span className="text-base text-text-muted ml-2">{t('wind.unit')}</span>
+        <Card className="p-4 sm:p-5 sm:col-span-2 lg:col-span-3">
+            <CardContent className="p-0">
+                <div className="flex items-center justify-between mb-2">
+                    <div className="text-sm font-medium text-secondary-foreground">{t('wind.title')}</div>
+                    <div className="text-xs text-muted-foreground">{t('wind.subtitle')}</div>
+                </div>
+                <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-3">
+                    <div>
+                        <div className="text-5xl font-semibold tracking-tight text-foreground">
+                            {current?.windSpeed != null ? Number(current.windSpeed).toFixed(1) : '—'}
+                            <span className="text-base text-muted-foreground ml-2">{t('wind.unit')}</span>
+                        </div>
+                        <div className="text-sm text-secondary-foreground mt-1">{windExtra || '—'}</div>
                     </div>
-                    <div className="text-sm text-text-secondary mt-1">{windExtra || '—'}</div>
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 sm:min-w-[320px]">
+                        <Item label={t('wind.gust_today')} data={gustToday} showTime={true} />
+                        <Item label={t('wind.gust_7d')} data={gust7d} showTime={false} showDateOnly={true} />
+                        <Item label={t('wind.gust_30d')} data={gust30d} showTime={false} showDateOnly={true} />
+                    </div>
                 </div>
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 sm:min-w-[320px]">
-                    <Item label={t('wind.gust_today')} data={gustToday} showTime={true} />
-                    <Item label={t('wind.gust_7d')} data={gust7d} showTime={false} showDateOnly={true} />
-                    <Item label={t('wind.gust_30d')} data={gust30d} showTime={false} showDateOnly={true} />
-                </div>
-            </div>
-        </div>
+            </CardContent>
+        </Card>
     );
 };
 

@@ -1,29 +1,30 @@
 import React from 'react';
-import { FiClock, FiDroplet, FiCalendar } from 'react-icons/fi';
+import { Clock, Droplet, Calendar } from 'lucide-react';
 import RadarMap from './RadarMap';
 import { useSettings } from '../context/SettingsContext';
+import { Card, CardContent } from './ui/card';
 
 const PrecipitationCard = ({ loading, statusCard, summaryCards, monthlyNormals, currentMonthPrecip, lastUpdate }) => {
     const { t } = useSettings();
 
     return (
-        <div className="rounded-2xl bg-card p-4 shadow-soft sm:p-5 sm:col-span-2 lg:col-span-3">
-            <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
-                <div className="text-sm font-medium text-text-secondary">{t('precip.title')}</div>
-                <div className="flex items-center gap-2 text-xs text-text-muted">
-                    {loading && (
-                        <span className="rounded-full border border-border bg-card-alt px-2 py-0.5 text-[11px] uppercase tracking-wide">
-                            {t('app.updating')}
-                        </span>
-                    )}
+        <Card className="p-4 sm:p-5 sm:col-span-2 lg:col-span-3">
+            <CardContent className="p-0 flex flex-col gap-4 sm:gap-5">
+                <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
+                    <div className="text-sm font-medium text-secondary-foreground">{t('precip.title')}</div>
+                    <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                        {loading && (
+                            <span className="rounded-full border border-border bg-muted px-2 py-0.5 text-[11px] uppercase tracking-wide">
+                                {t('app.updating')}
+                            </span>
+                        )}
+                    </div>
                 </div>
-            </div>
 
-            <div className="mt-4 flex flex-col gap-4 sm:gap-5">
                 <section className="grid grid-cols-1 gap-3 xl:grid-cols-4">
                     <div
                         className={`relative overflow-hidden rounded-2xl border p-5 sm:p-6 transition-all duration-300 xl:col-span-1 flex flex-col justify-between min-h-[160px] ${statusCard.variant === 'wet'
-                            ? 'border-sky-500/50 bg-gradient-to-br from-sky-600 via-blue-600 to-blue-700 text-white shadow-[0_8px_30px_rgb(2,132,199,0.25)]'
+                            ? 'border-chart-1/50 bg-gradient-to-br from-chart-1 via-chart-1 to-chart-1 text-white shadow-[0_8px_30px_rgb(2,132,199,0.25)]'
                             : 'border-border bg-card'
                             }`}
                     >
@@ -38,28 +39,28 @@ const PrecipitationCard = ({ loading, statusCard, summaryCards, monthlyNormals, 
                         )}
                         <div className="relative z-10 flex items-start justify-between flex-wrap gap-4">
                             <div className="flex flex-col">
-                                <span className={`text-[10px] font-bold uppercase tracking-widest ${statusCard.variant === 'wet' ? 'text-blue-100/70' : 'text-text-muted'}`}>
+                                <span className={`text-[10px] font-bold uppercase tracking-widest ${statusCard.variant === 'wet' ? 'text-white/70' : 'text-muted-foreground'}`}>
                                     {t('precip.cumToday', "Aujourd'hui")}
                                 </span>
-                                <div className={`mt-0.5 flex items-baseline gap-1.5 text-4xl sm:text-5xl font-black tracking-tight ${statusCard.variant === 'wet' ? 'text-white' : 'text-text'}`}>
+                                <div className={`mt-0.5 flex items-baseline gap-1.5 text-4xl sm:text-5xl font-black tracking-tight ${statusCard.variant === 'wet' ? 'text-white' : 'text-foreground'}`}>
                                     {statusCard.todayTotal ?? '0'}
-                                    {(statusCard.todayTotal != null || statusCard.todayTotal === 0) && <span className={`text-xl sm:text-2xl font-bold ${statusCard.variant === 'wet' ? 'text-white/70' : 'text-text-muted/70'}`}>mm</span>}
+                                    {(statusCard.todayTotal != null || statusCard.todayTotal === 0) && <span className={`text-xl sm:text-2xl font-bold ${statusCard.variant === 'wet' ? 'text-white/70' : 'text-muted-foreground/70'}`}>mm</span>}
                                 </div>
                                 <div className="flex items-center gap-2 mt-3">
                                     {statusCard.variant === 'wet' ? (
                                         <>
                                             <span className="relative flex h-2 w-2">
-                                                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-300 opacity-75"></span>
+                                                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-white/50 opacity-75"></span>
                                                 <span className="relative inline-flex rounded-full h-2 w-2 bg-white"></span>
                                             </span>
-                                            <span className="text-[11px] font-bold uppercase tracking-widest text-blue-100/90">{t('precip.ongoing', 'Épisode en cours')}</span>
+                                            <span className="text-[11px] font-bold uppercase tracking-widest text-white/90">{t('precip.ongoing', 'Épisode en cours')}</span>
                                         </>
                                     ) : (
-                                        <span className="text-[11px] font-bold uppercase tracking-widest text-text-muted">Pas de pluie actuellement</span>
+                                        <span className="text-[11px] font-bold uppercase tracking-widest text-muted-foreground">Pas de pluie actuellement</span>
                                     )}
                                 </div>
                                 {statusCard.variant === 'wet' && statusCard.description && (
-                                    <div className="text-xs font-semibold text-blue-100/80 mt-1">
+                                    <div className="text-xs font-semibold text-white/80 mt-1">
                                         {statusCard.description}
                                     </div>
                                 )}
@@ -77,30 +78,30 @@ const PrecipitationCard = ({ loading, statusCard, summaryCards, monthlyNormals, 
                         </div>
 
                         {statusCard.lastRadar && (
-                            <div className={`relative z-10 text-[9.5px] font-bold uppercase tracking-widest mt-auto pt-6 ${statusCard.variant === 'wet' ? 'text-blue-100/60' : 'text-text-muted/50'}`}>
+                            <div className={`relative z-10 text-[9.5px] font-bold uppercase tracking-widest mt-auto pt-6 ${statusCard.variant === 'wet' ? 'text-white/60' : 'text-muted-foreground/50'}`}>
                                 Radar : {statusCard.lastRadar.split(' ')[1] || statusCard.lastRadar}
                             </div>
                         )}
                     </div>
                     <div className="rounded-2xl border border-border bg-card shadow-sm flex flex-col overflow-hidden xl:col-span-3">
-                        <div className="flex items-center justify-between border-b border-border bg-card-alt/30 px-4 py-3">
-                            <div className="flex items-center gap-1.5 text-[11px] uppercase tracking-wide text-text-muted font-medium">
-                                <FiDroplet className="text-sky-500" /> {t('precip.recent_totals', 'Cumuls observés')}
+                        <div className="flex items-center justify-between border-b border-border bg-muted/30 px-4 py-3">
+                            <div className="flex items-center gap-1.5 text-[11px] uppercase tracking-wide text-muted-foreground font-medium">
+                                <Droplet className="size-4 text-chart-1" /> {t('precip.recent_totals', 'Cumuls observés')}
                             </div>
-                            {loading && <span className="text-[10px] uppercase tracking-wide text-sky-500 font-medium animate-pulse">{t('app.updating')}</span>}
+                            {loading && <span className="text-[10px] uppercase tracking-wide text-chart-1 font-medium animate-pulse">{t('app.updating')}</span>}
                         </div>
                         <div className="grid grid-cols-3 divide-x divide-border flex-1 bg-card">
                             {summaryCards.map(({ key, badge, value }) => (
-                                <div key={key} className="flex flex-col items-center justify-center p-4 sm:p-5 md:p-6 hover:bg-card-alt/50 transition-colors text-center group cursor-default">
-                                    <div className="flex items-center gap-1.5 bg-card-alt border border-border/40 rounded-full px-2.5 py-0.5 mb-2 sm:mb-4 group-hover:border-sky-500/30 transition-colors">
-                                        {key === 'month' ? <FiCalendar className="text-sky-500/70 text-[10px]" /> : <FiClock className="text-sky-500/70 text-[10px]" />}
-                                        <span className="text-[9px] sm:text-[10px] font-semibold uppercase tracking-wider text-text-muted group-hover:text-sky-500 transition-colors">
+                                <div key={key} className="flex flex-col items-center justify-center p-4 sm:p-5 md:p-6 hover:bg-muted/50 transition-colors text-center group cursor-default">
+                                    <div className="flex items-center gap-1.5 bg-muted border border-border/40 rounded-full px-2.5 py-0.5 mb-2 sm:mb-4 group-hover:border-chart-1/30 transition-colors">
+                                        {key === 'month' ? <Calendar className="size-3 text-chart-1/70" /> : <Clock className="size-3 text-chart-1/70" />}
+                                        <span className="text-[9px] sm:text-[10px] font-semibold uppercase tracking-wider text-muted-foreground group-hover:text-chart-1 transition-colors">
                                             {badge}
                                         </span>
                                     </div>
-                                    <div className="flex items-baseline gap-0.5 sm:gap-1 text-2xl sm:text-3xl md:text-4xl font-bold text-text">
+                                    <div className="flex items-baseline gap-0.5 sm:gap-1 text-2xl sm:text-3xl md:text-4xl font-bold text-foreground">
                                         <span>{value ?? '—'}</span>
-                                        {value != null && <span className="text-xs sm:text-sm font-semibold text-text-muted">mm</span>}
+                                        {value != null && <span className="text-xs sm:text-sm font-semibold text-muted-foreground">mm</span>}
                                     </div>
                                 </div>
                             ))}
@@ -111,17 +112,17 @@ const PrecipitationCard = ({ loading, statusCard, summaryCards, monthlyNormals, 
                 {monthlyNormals && monthlyNormals.length === 12 && (
                     <section className="rounded-2xl border border-border bg-card p-4 sm:p-5">
                        <div className="flex items-center justify-between mb-3 gap-2">
-                           <div className="text-[10px] sm:text-[11px] uppercase tracking-tight sm:tracking-wide text-text-muted leading-snug">
+                           <div className="text-[10px] sm:text-[11px] uppercase tracking-tight sm:tracking-wide text-muted-foreground leading-snug">
                                {t('precip.monthly_normals_title', 'Cumuls mensuels moyens')}
                            </div>
-                           <div className="flex items-center gap-2 sm:gap-3 text-[9px] sm:text-[10px] text-text-muted shrink-0">
+                           <div className="flex items-center gap-2 sm:gap-3 text-[9px] sm:text-[10px] text-muted-foreground shrink-0">
                                <div className="flex items-center gap-1.5">
-                                   <div className="w-2 h-2 sm:w-2.5 sm:h-2.5 bg-sky-500/20 rounded-[2px]"></div>
+                                   <div className="w-2 h-2 sm:w-2.5 sm:h-2.5 bg-chart-1/20 rounded-[2px]"></div>
                                    <span>Normale</span>
                                </div>
                                {currentMonthPrecip != null && (
                                    <div className="flex items-center gap-1.5">
-                                       <div className="w-2 h-2 sm:w-2.5 sm:h-2.5 bg-sky-500 shadow-[0_0_4px_rgba(14,165,233,0.5)] rounded-[2px]"></div>
+                                       <div className="w-2 h-2 sm:w-2.5 sm:h-2.5 bg-chart-1 shadow-[0_0_4px_rgba(14,165,233,0.5)] rounded-[2px]"></div>
                                        <span className="hidden sm:inline">Cumul actuel</span>
                                        <span className="sm:hidden">Actuel</span>
                                    </div>
@@ -149,24 +150,24 @@ const PrecipitationCard = ({ loading, statusCard, summaryCards, monthlyNormals, 
                                         <div key={idx} className="flex flex-col items-center flex-1 gap-1 group relative">
                                            <div className="flex flex-col items-center justify-end h-[24px] sm:h-[28px] pb-1 gap-0.5 z-20">
                                               {isCurrentMonth && currentMonthPrecip != null && (
-                                                 <span className="text-[9px] sm:text-[10px] font-bold text-sky-500 whitespace-nowrap leading-none">
+                                                 <span className="text-[9px] sm:text-[10px] font-bold text-chart-1 whitespace-nowrap leading-none">
                                                     {Math.round(currentMonthPrecip)} mm
                                                  </span>
                                               )}
-                                              <span className={`text-[9px] sm:text-[10px] whitespace-nowrap leading-none ${isCurrentMonth && currentMonthPrecip != null ? 'text-text-muted/60' : 'text-text-muted'}`}>
+                                              <span className={`text-[9px] sm:text-[10px] whitespace-nowrap leading-none ${isCurrentMonth && currentMonthPrecip != null ? 'text-muted-foreground/60' : 'text-muted-foreground'}`}>
                                                  {val} mm
                                               </span>
                                            </div>
                                            <div className="w-full flex justify-center h-[50px] sm:h-[70px] items-end relative">
                                           {/* Normal Bar */}
                                           <div 
-                                             className={`w-full max-w-[12px] sm:max-w-[20px] rounded-t-sm transition-all duration-300 absolute bottom-0 bg-sky-500/20`}
+                                             className={`w-full max-w-[12px] sm:max-w-[20px] rounded-t-sm transition-all duration-300 absolute bottom-0 bg-chart-1/20`}
                                              style={{ height: `${Math.max(heightPct, 5)}%` }}
                                           />
                                           {/* MTD Superimposed Bar */}
                                           {isCurrentMonth && currentMonthPrecip != null && (
                                              <div 
-                                                className="w-[6px] sm:w-[10px] rounded-t-[2px] transition-all duration-300 absolute bottom-0 bg-sky-500 shadow-[0_0_8px_rgba(14,165,233,0.5)] z-10"
+                                                className="w-[6px] sm:w-[10px] rounded-t-[2px] transition-all duration-300 absolute bottom-0 bg-chart-1 shadow-[0_0_8px_rgba(14,165,233,0.5)] z-10"
                                                 style={{ height: `${Math.max(mtdHeightPct, 2)}%` }}
                                                 title={`${currentMonthPrecip.toFixed(1)} mm du 1er à aujourd'hui`}
                                              >
@@ -179,7 +180,7 @@ const PrecipitationCard = ({ loading, statusCard, summaryCards, monthlyNormals, 
                                              </div>
                                           )}
                                        </div>
-                                       <span className={`text-[10px] sm:text-[11px] font-semibold ${isCurrentMonth ? 'text-sky-500' : 'text-text-muted'}`}>
+                                       <span className={`text-[10px] sm:text-[11px] font-semibold ${isCurrentMonth ? 'text-chart-1' : 'text-muted-foreground'}`}>
                                           {capMonth}
                                        </span>
                                     </div>
@@ -192,14 +193,14 @@ const PrecipitationCard = ({ loading, statusCard, summaryCards, monthlyNormals, 
                 )}
 
                 <section className="overflow-hidden rounded-2xl border border-border bg-card">
-                    <div className="flex items-center justify-between border-b border-border px-4 py-3 text-xs text-text-secondary">
+                    <div className="flex items-center justify-between border-b border-border px-4 py-3 text-xs text-secondary-foreground">
                         <span className="uppercase tracking-wide">{t('precip.radar_title')}</span>
-                        <span className="text-text-muted">{t('precip.source')}</span>
+                        <span className="text-muted-foreground">{t('precip.source')}</span>
                     </div>
                     <RadarMap embedded lastUpdate={lastUpdate} />
                 </section>
-            </div>
-        </div>
+            </CardContent>
+        </Card>
     );
 };
 
