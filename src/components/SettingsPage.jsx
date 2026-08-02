@@ -103,7 +103,9 @@ export default function SettingsPage({ onBack }) {
                             onValueChange={(val) => updateSetting('language', val)}
                         >
                             <SelectTrigger className="w-full">
-                                <SelectValue placeholder={t('settings.language.auto')} />
+                                <span className="flex flex-1 items-center text-left">
+                                    {settings.language === 'auto' ? t('settings.language.auto') : t(`settings.language.${settings.language}`)}
+                                </span>
                             </SelectTrigger>
                             <SelectContent>
                                 <SelectItem value="auto">
@@ -130,7 +132,9 @@ export default function SettingsPage({ onBack }) {
                             onValueChange={(val) => updateSetting('weatherModel', val)}
                         >
                             <SelectTrigger className="w-full">
-                                <SelectValue placeholder={t('settings.weatherModel.auto')} />
+                                <span className="flex flex-1 items-center text-left">
+                                    {settings.weatherModel === 'auto' || !settings.weatherModel ? t('settings.weatherModel.auto') : t(`settings.weatherModel.${settings.weatherModel}`)}
+                                </span>
                             </SelectTrigger>
                             <SelectContent>
                                 <SelectItem value="auto">{t('settings.weatherModel.auto')}</SelectItem>
