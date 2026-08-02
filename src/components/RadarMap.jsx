@@ -2,8 +2,8 @@ import React, { useEffect, useState, useRef, useMemo } from 'react'
 import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet'
 import { useTheme } from '../context/ThemeContext'
 import { useSettings } from '../context/SettingsContext'
-import { HiPlay, HiPause, HiBolt } from 'react-icons/hi2'
-import SwipeableTabs from './ui/SwipeableTabs'
+import { Play, Pause, Zap } from 'lucide-react'
+import { Tabs, TabsList, TabsTrigger } from './ui/tabs'
 
 export default function RadarMap({ embedded = false, lastUpdate } = {}) {
     const { isDark } = useTheme()
@@ -181,7 +181,7 @@ export default function RadarMap({ embedded = false, lastUpdate } = {}) {
 
     return (
         <div className={wrapperClasses}>
-            <div className="relative z-0 overflow-hidden rounded-xl bg-slate-100 dark:bg-slate-900" style={{ height: mapHeight, width: '100%' }}>
+            <div className="relative z-0 overflow-hidden rounded-xl bg-muted" style={{ height: mapHeight, width: '100%' }}>
                 <MapContainer key="radar-map-container" center={centerAigre} zoom={8} maxZoom={18} style={{ height: '100%', width: '100%' }}>
                     <TileLayer
                         url={tileUrl}
@@ -233,7 +233,7 @@ export default function RadarMap({ embedded = false, lastUpdate } = {}) {
                     onKeyDown={handleKeyDown}
                 >
                     {/* Track */}
-                    <div className="w-full h-1.5 rounded-full bg-slate-200 dark:bg-slate-700 relative mx-2">
+                    <div className="w-full h-1.5 rounded-full bg-muted-foreground/20 relative mx-2">
                         {/* Progress */}
                         <div
                             className="absolute left-0 top-0 h-full rounded-full bg-primary transition-all duration-150 ease-out"
@@ -249,17 +249,17 @@ export default function RadarMap({ embedded = false, lastUpdate } = {}) {
                                 {formattedTime}
                             </div>
                             {/* Handle */}
-                            <div className="h-4 w-4 bg-white dark:bg-slate-800 border-2 border-primary rounded-full shadow-sm" />
+                            <div className="h-4 w-4 bg-background border-2 border-primary rounded-full shadow-sm" />
                         </div>
                     </div>
 
                     {/* Edge time labels - positioned at edges with proper alignment */}
                     {hasFrames && (
                         <>
-                            <div className="absolute left-2 bottom-0 text-[10px] text-text-muted">
+                            <div className="absolute left-2 bottom-0 text-[10px] text-muted-foreground">
                                 {formatUnixTime(frames[0].time)}
                             </div>
-                            <div className="absolute right-2 bottom-0 text-[10px] text-text-muted">
+                            <div className="absolute right-2 bottom-0 text-[10px] text-muted-foreground">
                                 {formatUnixTime(frames[maxFrameIndex].time)}
                             </div>
                         </>
@@ -267,7 +267,7 @@ export default function RadarMap({ embedded = false, lastUpdate } = {}) {
                 </div>
 
                 {!hasFrames && (
-                    <div className="text-center text-xs text-text-muted mt-2">
+                    <div className="text-center text-xs text-muted-foreground mt-2">
                         {t('radar.loading')}
                     </div>
                 )}
@@ -276,35 +276,38 @@ export default function RadarMap({ embedded = false, lastUpdate } = {}) {
                 <div className="flex items-center justify-between gap-3 mt-2">
                     {/* Play/Pause Button */}
                     <button
-                        className={`flex-none h-10 w-10 flex items-center justify-center rounded-full border transition-all active:scale-95 ${isPlaying ? 'bg-primary/10 dark:bg-primary/20 border-primary/50 text-primary' : 'bg-card border-border text-text-muted hover:text-text hover:bg-card-alt'}`}
+                        className={`flex-none h-10 w-10 flex items-center justify-center rounded-full border transition-all active:scale-95 ${isPlaying ? 'bg-primary/10 dark:bg-primary/20 border-primary/50 text-primary' : 'bg-card border-border text-muted-foreground hover:text-foreground hover:bg-muted'}`}
                         onClick={() => setIsPlaying(!isPlaying)}
                         aria-label={isPlaying ? "Pause" : "Play"}
                     >
-                        {isPlaying ? <HiPause className="text-lg" /> : <HiPlay className="text-lg ml-0.5" />}
+                        {isPlaying ? <Pause className="size-4" /> : <Play className="size-4 ml-0.5" />}
                     </button>
 
-                    {/* Swipeable Speed Selector */}
+                    {/* Speed Selector */}
                     <div className="flex-1 max-w-[280px]">
-                        <SwipeableTabs
-                            options={speedOptions}
-                            value={speed}
-                            onChange={setSpeed}
-                            className="h-10 rounded-full border border-border bg-card shadow-sm p-1"
-                            itemClassName="rounded-full text-[11px] font-medium"
-                            activeItemClassName="text-primary font-bold dark:text-white"
-                            inactiveItemClassName="text-text-muted hover:text-text-secondary"
-                            indicatorClassName="rounded-full bg-primary/10 dark:bg-primary/20 border border-primary/50 top-1 bottom-1 left-1"
-                        />
+                        <Tabs value={speed} onValueChange={(v) => setSpeed(Number(v))} className="w-full">
+                            <TabsList className="w-full h-10 rounded-full bg-muted p-1">
+                                {speedOptions.map(({ value, label }) => (
+                                    <TabsTrigger
+                                        key={value}
+                                        value={value}
+                                        className="flex-1 rounded-full text-[11px] font-medium data-active:bg-background data-active:text-foreground data-active:shadow-sm"
+                                    >
+                                        {label}
+                                    </TabsTrigger>
+                                ))}
+                            </TabsList>
+                        </Tabs>
                     </div>
 
 
                     {/* Lightning Toggle */}
                     <button
-                        className={`flex flex-none items-center justify-center h-10 w-10 sm:w-auto sm:px-3 rounded-full border transition-all active:scale-95 gap-2 ${showLightning ? 'bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400 border-amber-300 dark:border-amber-700' : 'bg-card border-border text-text-muted hover:text-text hover:bg-card-alt'}`}
+                        className={`flex flex-none items-center justify-center h-10 w-10 sm:w-auto sm:px-3 rounded-full border transition-all active:scale-95 gap-2 ${showLightning ? 'bg-chart-2/15 text-chart-2 border-chart-2/30' : 'bg-card border-border text-muted-foreground hover:text-foreground hover:bg-muted'}`}
                         onClick={() => setShowLightning(!showLightning)}
                         title="Afficher/Masquer les éclairs"
                     >
-                        <HiBolt className={`text-lg ${showLightning ? 'fill-current' : ''}`} />
+                        <Zap className={`size-4 ${showLightning ? 'fill-current' : ''}`} />
                         <span className="hidden sm:inline text-xs font-medium">{t('radar.lightning')}</span>
                     </button>
                 </div>
