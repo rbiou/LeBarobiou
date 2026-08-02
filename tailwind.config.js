@@ -59,18 +59,6 @@ export default {
           border: 'rgb(var(--sidebar-border) / <alpha-value>)',
           ring: 'rgb(var(--sidebar-ring) / <alpha-value>)',
         },
-
-        // ===== Legacy tokens (temporary — removed after migration) =====
-        bg: 'rgb(var(--bg-main) / <alpha-value>)',
-        'card-alt': 'rgb(var(--bg-card-alt) / <alpha-value>)',
-        text: 'rgb(var(--text-main) / <alpha-value>)',
-        'text-secondary': 'rgb(var(--text-secondary) / <alpha-value>)',
-        'text-muted': 'rgb(var(--text-muted) / <alpha-value>)',
-        'accent-sky': 'rgb(var(--accent-sky) / <alpha-value>)',
-        'accent-blue': 'rgb(var(--accent-blue) / <alpha-value>)',
-        'accent-amber': 'rgb(var(--accent-amber) / <alpha-value>)',
-        'accent-rose': 'rgb(var(--accent-rose) / <alpha-value>)',
-        'accent-indigo': 'rgb(var(--accent-indigo) / <alpha-value>)',
       },
       boxShadow: {
         soft: '0 10px 25px -10px rgba(0, 0, 0, 0.1)',

@@ -491,11 +491,11 @@ export default function WeatherChart({
           )}
         </div>
       ) : (
-        title && <div className="text-xs font-semibold uppercase tracking-wide text-text-muted mb-2 text-center">{title}</div>
+        title && <div className="text-xs font-semibold uppercase tracking-wide text-muted-foreground mb-2 text-center">{title}</div>
       )}
 
       {loading && (
-        <div className="w-full rounded-xl border border-dashed border-border bg-card-alt py-10 text-center text-sm text-text-muted">
+        <div className="w-full rounded-xl border border-dashed border-border bg-muted py-10 text-center text-sm text-muted-foreground">
           {t('chart.loading')}
         </div>
       )}
@@ -507,7 +507,7 @@ export default function WeatherChart({
       )}
 
       {showEmptyState && !error && (
-        <div className="w-full rounded-xl border border-dashed border-border bg-card-alt py-10 text-center text-sm text-text-muted">
+        <div className="w-full rounded-xl border border-dashed border-border bg-muted py-10 text-center text-sm text-muted-foreground">
           {t('chart.noData')}
         </div>
       )}
@@ -528,9 +528,9 @@ export default function WeatherChart({
                 {legendItems.map((entry) => {
                   const active = visible[entry.key] !== false
                   return (
-                    <button key={entry.key} type="button" onClick={() => handleLegendClick(entry.key)} className={`flex items-center gap-2 px-2.5 py-1.5 rounded-full transition-all touch-manipulation whitespace-nowrap border shrink-0 ${active ? 'opacity-100 bg-card-alt/50 shadow-sm border-border/50' : 'opacity-50 grayscale hover:opacity-70 border-transparent'}`} aria-pressed={active}>
+                    <button key={entry.key} type="button" onClick={() => handleLegendClick(entry.key)} className={`flex items-center gap-2 px-2.5 py-1.5 rounded-full transition-all touch-manipulation whitespace-nowrap border shrink-0 ${active ? 'opacity-100 bg-muted/50 shadow-sm border-border/50' : 'opacity-50 grayscale hover:opacity-70 border-transparent'}`} aria-pressed={active}>
                       <span className="inline-block w-2.5 h-2.5 rounded-full shrink-0" style={{ backgroundColor: entry.color, border: entry.type === 'line' ? `1px solid ${entry.color}` : 'none', opacity: entry.type === 'line' && entry.dash ? 0.7 : 1 }} />
-                      <span className={`text-xs font-medium whitespace-nowrap ${active ? 'text-text' : 'text-text-muted line-through decoration-text-muted/50'}`}>
+                      <span className={`text-xs font-medium whitespace-nowrap ${active ? 'text-foreground' : 'text-muted-foreground line-through decoration-muted-foreground/50'}`}>
                         {entry.label}
                       </span>
                     </button>

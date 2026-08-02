@@ -82,7 +82,7 @@ export default function PullToRefresh({ onRefresh, isRefreshing, children }) {
             <button
                 onClick={() => !isRefreshing && onRefresh()}
                 disabled={isRefreshing}
-                className="lg:hidden w-full flex items-center justify-center text-text-muted transition-colors cursor-pointer disabled:cursor-wait focus:outline-none active:text-text-muted"
+                className="lg:hidden w-full flex items-center justify-center text-muted-foreground transition-colors cursor-pointer disabled:cursor-wait focus:outline-none active:text-muted-foreground"
                 style={{
                     paddingTop: 8,
                     paddingBottom: 8,
@@ -112,7 +112,7 @@ export default function PullToRefresh({ onRefresh, isRefreshing, children }) {
                 <button
                     onClick={() => !isRefreshing && onRefresh()}
                     disabled={isRefreshing}
-                    className="flex items-center gap-2 px-4 py-2 text-xs text-text-muted hover:text-text bg-card hover:bg-card-alt border border-border rounded-full transition-all cursor-pointer disabled:cursor-wait focus:outline-none shadow-sm hover:shadow active:scale-95"
+                    className="flex items-center gap-2 px-4 py-2 text-xs text-muted-foreground hover:text-foreground bg-card hover:bg-muted border border-border rounded-full transition-all cursor-pointer disabled:cursor-wait focus:outline-none shadow-sm hover:shadow active:scale-95"
                 >
                     <RefreshCw className={`size-3.5 ${isRefreshing ? 'animate-spin' : ''}`} />
                     <span className="font-medium">

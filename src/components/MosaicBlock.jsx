@@ -36,7 +36,7 @@ export default function MosaicBlock({ hourly, hourly7d, dailyHistory, minLoading
             {/* Header with Title and Range Selector */}
             <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between mb-4">
                 <div className="flex items-center gap-2">
-                    <div className="text-sm font-medium text-text-secondary">
+                    <div className="text-sm font-medium text-secondary-foreground">
                         {t('settings.blocs.mosaic.detailed').replace('{range}',
                             range === 'day' ? t('chart.range.day') : (range === '7d' ? t('chart.range.week') : t('chart.range.month'))
                         )}
@@ -83,7 +83,7 @@ export default function MosaicBlock({ hourly, hourly7d, dailyHistory, minLoading
                     chartSettings={{
                         showTempExtremes: settings.mosaic?.showTempExtremes ?? true
                     }}
-                    className="bg-card-alt border border-border/50 !p-3 shadow-none"
+                    className="bg-muted border border-border/50 !p-3 shadow-none"
                 />
 
                 {/* Tile 2: Precipitation */}
@@ -107,7 +107,7 @@ export default function MosaicBlock({ hourly, hourly7d, dailyHistory, minLoading
                         precipRate: false
                     }}
                     chartSettings={{ showTempExtremes: false }}
-                    className="bg-card-alt border border-border/50 !p-3 shadow-none"
+                    className="bg-muted border border-border/50 !p-3 shadow-none"
                 />
 
                 {/* Tile 3: Pressure */}
@@ -131,7 +131,7 @@ export default function MosaicBlock({ hourly, hourly7d, dailyHistory, minLoading
                         precipRate: false
                     }}
                     chartSettings={{ showTempExtremes: false }}
-                    className="bg-card-alt border border-border/50 !p-3 shadow-none"
+                    className="bg-muted border border-border/50 !p-3 shadow-none"
                 />
 
                 {/* Tile 4: Humidity */}
@@ -155,7 +155,7 @@ export default function MosaicBlock({ hourly, hourly7d, dailyHistory, minLoading
                         precipRate: false
                     }}
                     chartSettings={{ showTempExtremes: false }}
-                    className="bg-card-alt border border-border/50 !p-3 shadow-none"
+                    className="bg-muted border border-border/50 !p-3 shadow-none"
                 />
 
             </div>

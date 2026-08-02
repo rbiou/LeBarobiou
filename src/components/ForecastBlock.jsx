@@ -43,7 +43,7 @@ const ScrollArrow = ({ direction, onClick }) => (
     <div className={`absolute ${direction === 'left' ? 'left-0 bg-gradient-to-r from-card via-card' : 'right-0 bg-gradient-to-l from-card via-card'} top-0 bottom-0 z-10 flex items-center to-transparent ${direction === 'left' ? 'pl-0 pr-6' : 'pr-0 pl-6'}`}>
         <button
             onClick={(e) => { e.stopPropagation(); onClick(); }}
-            className="p-1 rounded-full bg-card-alt border border-border/50 shadow-sm hover:bg-card-alt/80 text-text-muted hover:text-text transition-colors"
+            className="p-1 rounded-full bg-muted border border-border/50 shadow-sm hover:bg-muted/80 text-muted-foreground hover:text-foreground transition-colors"
         >
             {direction === 'left' ? <ChevronLeft className="size-3.5" /> : <ChevronRight className="size-3.5" />}
         </button>
@@ -226,7 +226,7 @@ export default function ForecastBlock({ lat, lon, lastUpdate }) {
 
     if (!forecast && loading) return (
         <div className="rounded-2xl bg-card p-6 shadow-soft h-40 flex items-center justify-center">
-            <span className="text-text-muted text-sm animate-pulse">{t('app.loading')}</span>
+            <span className="text-muted-foreground text-sm animate-pulse">{t('app.loading')}</span>
         </div>
     );
 
@@ -235,10 +235,10 @@ export default function ForecastBlock({ lat, lon, lastUpdate }) {
     return (
         <section className="bg-card rounded-2xl shadow-soft p-4 sm:p-5 overflow-hidden transition-all duration-300 relative group">
             <div className="flex items-center justify-between mb-4">
-                <h2 className="text-sm font-semibold uppercase tracking-wider text-text-muted px-1">
+                <h2 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground px-1">
                     {t('forecast.title')}
                 </h2>
-                <div className="text-xs text-text-muted">
+                <div className="text-xs text-muted-foreground">
                     {t('forecast.source')}
                 </div>
             </div>
@@ -268,11 +268,11 @@ export default function ForecastBlock({ lat, lon, lastUpdate }) {
                             <div
                                 key={index}
                                 onClick={() => handleDayClick(index)}
-                                className={`flex-none w-[130px] sm:w-[140px] snap-center flex flex-col rounded-2xl border transition-all duration-300 cursor-pointer overflow-hidden ${isSelected ? 'bg-card-alt ring-2 ring-primary/20 border-primary' : 'bg-bg/40 border-border/50 hover:bg-bg/60'}`}
+                                className={`flex-none w-[130px] sm:w-[140px] snap-center flex flex-col rounded-2xl border transition-all duration-300 cursor-pointer overflow-hidden ${isSelected ? 'bg-muted ring-2 ring-primary/20 border-primary' : 'bg-muted/40 border-border/50 hover:bg-muted/60'}`}
                             >
                                 {/* Day Header */}
-                                <div className={`py-2 px-1 flex flex-col items-center justify-center gap-0.5 border-b border-border/30 transition-colors ${isSelected ? 'bg-primary/5' : 'bg-card-alt/50'}`}>
-                                    <span className={`text-[11px] font-bold uppercase tracking-wider text-center truncate w-full ${isSelected ? 'text-primary' : 'text-text-secondary'}`}>
+                                <div className={`py-2 px-1 flex flex-col items-center justify-center gap-0.5 border-b border-border/30 transition-colors ${isSelected ? 'bg-primary/5' : 'bg-muted/50'}`}>
+                                    <span className={`text-[11px] font-bold uppercase tracking-wider text-center truncate w-full ${isSelected ? 'text-primary' : 'text-secondary-foreground'}`}>
                                         {getDayName(day.date)}
                                     </span>
                                     <div className="text-[10px] font-medium flex gap-1.5 items-center">
@@ -313,7 +313,7 @@ export default function ForecastBlock({ lat, lon, lastUpdate }) {
             {/* CONTINUOUS TIMELINE VIEW */}
             {(
                 <div
-                    className="mt-2 bg-bg/40 rounded-xl p-3 border border-border/50 animate-in slide-in-from-top-2 fade-in duration-300 relative"
+                    className="mt-2 bg-muted/40 rounded-xl p-3 border border-border/50 animate-in slide-in-from-top-2 fade-in duration-300 relative"
                 >
                     {hoursScroll.canScrollLeft && <ScrollArrow direction="left" onClick={() => hoursScroll.scroll('left')} />}
 
@@ -336,7 +336,7 @@ export default function ForecastBlock({ lat, lon, lastUpdate }) {
                                     {/* Separator */}
                                     {dayIndex > 0 && (
                                         <div className="flex-none flex flex-col items-center justify-end self-stretch gap-2 mx-1 -mb-1 pb-1 opacity-70">
-                                            <span className="text-[9px] font-bold uppercase tracking-widest text-text-muted/60 whitespace-nowrap" style={{ writingMode: 'vertical-rl', transform: 'rotate(180deg)' }}>
+                                            <span className="text-[9px] font-bold uppercase tracking-widest text-muted-foreground/60 whitespace-nowrap" style={{ writingMode: 'vertical-rl', transform: 'rotate(180deg)' }}>
                                                 {getSeparatorText(day.date)}
                                             </span>
                                             <div className="w-px h-8 bg-gradient-to-b from-border/10 to-border/40" />
@@ -353,11 +353,11 @@ export default function ForecastBlock({ lat, lon, lastUpdate }) {
 
                                         return (
                                             <div key={`${dayIndex}-${i}`} className="flex-none w-[42px] snap-start flex flex-col items-center gap-1 mx-1.5">
-                                                <span className={`text-[9px] font-medium whitespace-nowrap ${isNow ? 'text-primary font-bold' : 'text-text-muted'}`}>
+                                                <span className={`text-[9px] font-medium whitespace-nowrap ${isNow ? 'text-primary font-bold' : 'text-muted-foreground'}`}>
                                                     {isNow ? t('date.now') : formatHour(h.time)}
                                                 </span>
                                                 <Icon className={`text-xl ${info.style}`} />
-                                                <span className="text-xs font-bold text-text-primary">{Math.round(h.temp)}°</span>
+                                                <span className="text-xs font-bold text-foreground">{Math.round(h.temp)}°</span>
 
                                                 <div className="h-4 w-full flex items-center justify-center">
                                                     {h.precipProb > 0 && (

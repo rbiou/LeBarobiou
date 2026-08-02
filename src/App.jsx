@@ -351,7 +351,7 @@ function AppContent() {
       return {
         progressPct: 0,
         label: t('sun.night'),
-        tone: 'bg-card-alt text-text-secondary border border-border',
+        tone: 'bg-muted text-secondary-foreground border border-border',
         lengthLabel: '—',
       }
     }
@@ -372,28 +372,28 @@ function AppContent() {
     const parisHour = parseInt(now.toLocaleTimeString(locale, { hour: '2-digit', hour12: false, timeZone: 'Europe/Paris' }), 10)
 
     let label = t('sun.night')
-    let tone = 'bg-card-alt text-text-secondary border border-border'
+    let tone = 'bg-muted text-secondary-foreground border border-border'
 
     if (now < sunrise) {
       // Before sunrise
       label = t('sun.beforeSunrise')
-      tone = 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 border border-slate-200 dark:border-slate-700'
+      tone = 'bg-muted text-muted-foreground border border-border'
     } else if (now >= sunset) {
       // After sunset
       label = t('sun.night')
-      tone = 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 border border-slate-200 dark:border-slate-700'
+      tone = 'bg-muted text-muted-foreground border border-border'
     } else if (parisHour < 12) {
       // Morning (before noon)
       label = t('sun.morning')
-      tone = 'bg-sky-100 dark:bg-sky-900/30 text-sky-700 dark:text-sky-300 border border-sky-200 dark:border-sky-800'
+      tone = 'bg-chart-1/10 text-chart-1 border border-chart-1/20'
     } else if (parisHour < 17) {
       // Afternoon (12h - 17h)
       label = t('sun.afternoon')
-      tone = 'bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300 border border-amber-200 dark:border-amber-800'
+      tone = 'bg-chart-2/10 text-chart-2 border border-chart-2/20'
     } else {
       // Evening (17h until sunset)
       label = t('sun.evening')
-      tone = 'bg-rose-100 dark:bg-rose-900/30 text-rose-700 dark:text-rose-300 border border-rose-200 dark:border-rose-800'
+      tone = 'bg-chart-3/10 text-chart-3 border border-chart-3/20'
     }
 
     return { progressPct: Math.min(Math.max(progressPct, 0), 100), label, tone, lengthLabel }
@@ -563,7 +563,7 @@ function AppContent() {
   }
 
   return (
-    <div className="min-h-screen bg-bg text-text transition-colors duration-300">
+    <div className="min-h-screen bg-background text-foreground transition-colors duration-300">
       <header className="px-0 sm:px-4 pt-0 sm:pt-6">
         <div className="mx-auto container-max">
           <div className="relative overflow-hidden sm:rounded-[2.5rem] shadow-lg group h-[220px] sm:h-[280px] lg:h-[320px] bg-slate-900 border-b sm:border border-white/10">
@@ -767,14 +767,14 @@ function AppContent() {
           <ThemeToggle />
           <button
             onClick={() => setCurrentPage('settings')}
-            className="h-10 flex items-center gap-2 px-5 rounded-full bg-card hover:bg-card-alt text-text transition-all shadow-sm border border-border active:scale-95"
+            className="h-10 flex items-center gap-2 px-5 rounded-full bg-card hover:bg-muted text-foreground transition-all shadow-sm border border-border active:scale-95"
             aria-label={t('settings.title')}
           >
-            <Settings className="size-4 text-text-secondary" />
+            <Settings className="size-4 text-secondary-foreground" />
             <span className="text-xs font-medium">{t('settings.title')}</span>
           </button>
         </div>
-        <p className="text-center text-xs text-text-muted">{t('app.footer')} — © {new Date().getFullYear()}</p>
+        <p className="text-center text-xs text-muted-foreground">{t('app.footer')} — © {new Date().getFullYear()}</p>
       </footer>
       <Toaster position="top-center" />
     </div>
