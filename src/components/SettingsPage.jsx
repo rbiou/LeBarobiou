@@ -1,9 +1,16 @@
 import React, { useState, useEffect } from 'react'
-import { FiArrowLeft, FiChevronDown, FiChevronUp, FiCheck, FiMenu, FiGrid } from 'react-icons/fi'
-import { WiThermometer, WiRain, WiStrongWind, WiDaySunny, WiTime3 } from 'react-icons/wi'
+import { ArrowLeft, Check, GripVertical, LayoutGrid, Globe, Thermometer, CloudRain, Wind, Sun, Clock } from 'lucide-react'
 import { useSettings } from '../context/SettingsContext'
-import Select from './ui/Select'
-import { HiGlobeAlt } from 'react-icons/hi2'
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from './ui/select'
+import { Switch } from './ui/switch'
+import { Checkbox } from './ui/checkbox'
+import { Card, CardContent, CardHeader, CardTitle } from './ui/card'
 import {
     DndContext,
     closestCenter,
@@ -66,16 +73,16 @@ export default function SettingsPage({ onBack }) {
         : ['weatherCards', 'precipitation', 'wind', 'sunMoon', 'chart']
 
     return (
-        <div className="min-h-screen bg-bg text-text transition-colors duration-300">
+        <div className="min-h-screen bg-background text-foreground transition-colors duration-300">
             {/* Header */}
-            <header className="sticky top-0 z-20 bg-bg/95 backdrop-blur-md border-b border-border">
+            <header className="sticky top-0 z-20 bg-background/95 backdrop-blur-md border-b border-border">
                 <div className="mx-auto container-max px-4 py-4 flex items-center gap-4">
                     <button
                         onClick={onBack}
-                        className="p-2 -ml-2 rounded-full hover:bg-card-alt transition-colors active:scale-95 duration-200"
+                        className="p-2 -ml-2 rounded-full hover:bg-muted transition-colors active:scale-95 duration-200"
                         aria-label={t('settings.back')}
                     >
-                        <FiArrowLeft size={22} />
+                        <ArrowLeft size={22} />
                     </button>
                     <h1 className="text-xl font-semibold tracking-tight">{t('settings.title')}</h1>
                 </div>
@@ -84,45 +91,64 @@ export default function SettingsPage({ onBack }) {
             <main className="mx-auto container-max px-4 py-6 space-y-6 pb-20">
 
                 {/* Language Section - Global */}
-                <section className="bg-card rounded-3xl shadow-soft p-5 border border-border/50">
-                    <h2 className="text-sm font-semibold uppercase tracking-wider text-text-muted mb-4 px-1">
-                        {t('settings.language')}
-                    </h2>
-                    <Select
-                        options={[
-                            { value: 'auto', label: t('settings.language.auto'), icon: HiGlobeAlt },
-                            { value: 'fr', label: t('settings.language.fr') },
-                            { value: 'en', label: t('settings.language.en') }
-                        ]}
-                        value={settings.language}
-                        onChange={(val) => updateSetting('language', val)}
-                    />
-                </section>
+                <Card>
+                    <CardHeader>
+                        <CardTitle className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">
+                            {t('settings.language')}
+                        </CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                        <Select
+                            value={settings.language}
+                            onValueChange={(val) => updateSetting('language', val)}
+                        >
+                            <SelectTrigger className="w-full">
+                                <SelectValue placeholder={t('settings.language.auto')} />
+                            </SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="auto">
+                                    <Globe className="size-4" />
+                                    {t('settings.language.auto')}
+                                </SelectItem>
+                                <SelectItem value="fr">{t('settings.language.fr')}</SelectItem>
+                                <SelectItem value="en">{t('settings.language.en')}</SelectItem>
+                            </SelectContent>
+                        </Select>
+                    </CardContent>
+                </Card>
 
                 {/* Weather Model Section */}
-                <section className="bg-card rounded-3xl shadow-soft p-5 border border-border/50">
-                    <h2 className="text-sm font-semibold uppercase tracking-wider text-text-muted mb-4 px-1">
-                        {t('settings.weatherModel')}
-                    </h2>
-                    <Select
-                        options={[
-                            { value: 'auto', label: t('settings.weatherModel.auto') },
-                            { value: 'meteofrance_seamless', label: t('settings.weatherModel.meteofrance_seamless') },
-                            { value: 'icon_seamless', label: t('settings.weatherModel.icon_seamless') },
-                            { value: 'gfs_seamless', label: t('settings.weatherModel.gfs_seamless') },
-                            { value: 'ecmwf_ifs04', label: t('settings.weatherModel.ecmwf_ifs04') },
-                        ]}
-                        value={settings.weatherModel || 'auto'}
-                        onChange={(val) => updateSetting('weatherModel', val)}
-                    />
-                    <p className="mt-3 text-xs text-text-muted px-1">
-                        {t('settings.weatherModel.desc')}
-                    </p>
-                </section>
+                <Card>
+                    <CardHeader>
+                        <CardTitle className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">
+                            {t('settings.weatherModel')}
+                        </CardTitle>
+                    </CardHeader>
+                    <CardContent className="flex flex-col gap-3">
+                        <Select
+                            value={settings.weatherModel || 'auto'}
+                            onValueChange={(val) => updateSetting('weatherModel', val)}
+                        >
+                            <SelectTrigger className="w-full">
+                                <SelectValue placeholder={t('settings.weatherModel.auto')} />
+                            </SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="auto">{t('settings.weatherModel.auto')}</SelectItem>
+                                <SelectItem value="meteofrance_seamless">{t('settings.weatherModel.meteofrance_seamless')}</SelectItem>
+                                <SelectItem value="icon_seamless">{t('settings.weatherModel.icon_seamless')}</SelectItem>
+                                <SelectItem value="gfs_seamless">{t('settings.weatherModel.gfs_seamless')}</SelectItem>
+                                <SelectItem value="ecmwf_ifs04">{t('settings.weatherModel.ecmwf_ifs04')}</SelectItem>
+                            </SelectContent>
+                        </Select>
+                        <p className="text-xs text-muted-foreground">
+                            {t('settings.weatherModel.desc')}
+                        </p>
+                    </CardContent>
+                </Card>
 
                 {/* Blocs Configuration - List of cards */}
                 <div className="space-y-4">
-                    <h2 className="text-sm font-semibold uppercase tracking-wider text-text-muted px-2">
+                    <h2 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground px-2">
                         {t('settings.blocs')}
                     </h2>
 
@@ -144,7 +170,7 @@ export default function SettingsPage({ onBack }) {
                                             <SortableBlocItem key={key} id={key}>
                                                 <BlocSettings
                                                     title={t('settings.blocs.forecast')}
-                                                    icon={<WiDaySunny className="text-3xl text-yellow-500" />}
+                                                    icon={<Sun className="size-6 text-amber-500" />}
                                                     isActive={settings.blocs.forecast}
                                                     onToggle={() => toggleSetting('blocs.forecast')}
                                                     collapsible
@@ -169,7 +195,7 @@ export default function SettingsPage({ onBack }) {
                                             <SortableBlocItem key={key} id={key}>
                                                 <BlocSettings
                                                     title={t('settings.blocs.weatherCards')}
-                                                    icon={<WiThermometer className="text-3xl text-orange-500" />}
+                                                    icon={<Thermometer className="size-6 text-orange-500" />}
                                                     isActive={settings.blocs.weatherCards}
                                                     onToggle={() => toggleSetting('blocs.weatherCards')}
                                                     isGlobalDragActive={!!activeDragId}
@@ -182,7 +208,7 @@ export default function SettingsPage({ onBack }) {
                                             <SortableBlocItem key={key} id={key}>
                                                 <BlocSettings
                                                     title={t('settings.blocs.precipitation')}
-                                                    icon={<WiRain className="text-3xl text-blue-500" />}
+                                                    icon={<CloudRain className="size-6 text-blue-500" />}
                                                     isActive={settings.blocs.precipitation}
                                                     onToggle={() => toggleSetting('blocs.precipitation')}
                                                     isGlobalDragActive={!!activeDragId}
@@ -195,7 +221,7 @@ export default function SettingsPage({ onBack }) {
                                             <SortableBlocItem key={key} id={key}>
                                                 <BlocSettings
                                                     title={t('settings.blocs.wind')}
-                                                    icon={<WiStrongWind className="text-3xl text-teal-500" />}
+                                                    icon={<Wind className="size-6 text-teal-500" />}
                                                     isActive={settings.blocs.wind}
                                                     onToggle={() => toggleSetting('blocs.wind')}
                                                     isGlobalDragActive={!!activeDragId}
@@ -208,7 +234,7 @@ export default function SettingsPage({ onBack }) {
                                             <SortableBlocItem key={key} id={key}>
                                                 <BlocSettings
                                                     title={t('settings.blocs.sunMoon')}
-                                                    icon={<WiDaySunny className="text-3xl text-amber-500" />}
+                                                    icon={<Sun className="size-6 text-amber-500" />}
                                                     isActive={settings.blocs.sunMoon}
                                                     onToggle={() => toggleSetting('blocs.sunMoon')}
                                                     isGlobalDragActive={!!activeDragId}
@@ -221,7 +247,7 @@ export default function SettingsPage({ onBack }) {
                                             <SortableBlocItem key={key} id={key}>
                                                 <BlocSettings
                                                     title={t('settings.blocs.chart')}
-                                                    icon={<WiTime3 className="text-3xl text-indigo-500" />}
+                                                    icon={<Clock className="size-6 text-indigo-500" />}
                                                     isActive={settings.blocs.chart}
                                                     onToggle={() => toggleSetting('blocs.chart')}
                                                     collapsible
@@ -241,7 +267,7 @@ export default function SettingsPage({ onBack }) {
 
                                                         {/* Default Visible Data */}
                                                         <div className="space-y-3">
-                                                            <h3 className="text-xs font-semibold uppercase tracking-wide text-text-muted">
+                                                            <h3 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
                                                                 {t('settings.chart.defaults')}
                                                             </h3>
                                                             <div className="grid grid-cols-1 gap-2">
@@ -257,7 +283,7 @@ export default function SettingsPage({ onBack }) {
                                                                         <span className="flex items-center justify-between gap-2 w-full">
                                                                             <span>{label}</span>
                                                                             {!isAvailable && (
-                                                                                <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400 font-bold uppercase tracking-wider whitespace-nowrap">
+                                                                                <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-destructive/10 text-destructive font-bold uppercase tracking-wider whitespace-nowrap">
                                                                                     {t('settings.chart.unavailable')}
                                                                                 </span>
                                                                             )}
@@ -265,22 +291,29 @@ export default function SettingsPage({ onBack }) {
                                                                     )
 
                                                                     return (
-                                                                        <Checkbox
+                                                                        <label
                                                                             key={key}
-                                                                            label={labelContent}
-                                                                            checked={settings.chart.defaultVisible[key]}
-                                                                            disabled={!isAvailable}
-                                                                            onChange={() => {
-                                                                                if (!isAvailable) return
-                                                                                updateSetting('chart', {
-                                                                                    ...settings.chart,
-                                                                                    defaultVisible: {
-                                                                                        ...settings.chart.defaultVisible,
-                                                                                        [key]: !settings.chart.defaultVisible[key]
-                                                                                    }
-                                                                                })
-                                                                            }}
-                                                                        />
+                                                                            className={`flex items-center gap-3 p-3 rounded-xl border w-full text-left transition-all active:scale-[0.99] ${!isAvailable
+                                                                                ? 'bg-muted/50 border-border/30 opacity-60 cursor-not-allowed grayscale'
+                                                                                : 'bg-muted border-border/50 cursor-pointer hover:bg-muted/80'
+                                                                                }`}
+                                                                        >
+                                                                            <Checkbox
+                                                                                checked={settings.chart.defaultVisible[key]}
+                                                                                disabled={!isAvailable}
+                                                                                onCheckedChange={() => {
+                                                                                    if (!isAvailable) return
+                                                                                    updateSetting('chart', {
+                                                                                        ...settings.chart,
+                                                                                        defaultVisible: {
+                                                                                            ...settings.chart.defaultVisible,
+                                                                                            [key]: !settings.chart.defaultVisible[key]
+                                                                                        }
+                                                                                    })
+                                                                                }}
+                                                                            />
+                                                                            <span className="text-sm font-medium text-secondary-foreground flex-1">{labelContent}</span>
+                                                                        </label>
                                                                     )
                                                                 })}
                                                             </div>
@@ -288,10 +321,10 @@ export default function SettingsPage({ onBack }) {
 
                                                         {/* Legend Selectable Data */}
                                                         <div className="space-y-3">
-                                                            <h3 className="text-xs font-semibold uppercase tracking-wide text-text-muted">
+                                                            <h3 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
                                                                 {t('settings.chart.legend')}
                                                             </h3>
-                                                            <div className="text-xs text-text-muted mb-2 opacity-80">
+                                                            <div className="text-xs text-muted-foreground mb-2 opacity-80">
                                                                 {t('settings.chart.selectableDesc')}
                                                             </div>
                                                             <div className="grid grid-cols-1 gap-2">
@@ -302,27 +335,31 @@ export default function SettingsPage({ onBack }) {
                                                                     { key: 'precipAmount', label: t('chart.series.precipRain') },
                                                                     { key: 'precipCum', label: t('chart.series.precipCum') },
                                                                 ].map(({ key, label }) => (
-                                                                    <Checkbox
+                                                                    <label
                                                                         key={key}
-                                                                        label={label}
-                                                                        checked={settings.chart.selectableInLegend[key]}
-                                                                        onChange={() => {
-                                                                            const newValue = !settings.chart.selectableInLegend[key]
-                                                                            // If disabling availability, also disable default visibility
-                                                                            const newDefaultVisible = newValue
-                                                                                ? settings.chart.defaultVisible
-                                                                                : { ...settings.chart.defaultVisible, [key]: false }
+                                                                        className="flex items-center gap-3 p-3 rounded-xl border w-full text-left transition-all active:scale-[0.99] bg-muted border-border/50 cursor-pointer hover:bg-muted/80"
+                                                                    >
+                                                                        <Checkbox
+                                                                            checked={settings.chart.selectableInLegend[key]}
+                                                                            onCheckedChange={() => {
+                                                                                const newValue = !settings.chart.selectableInLegend[key]
+                                                                                // If disabling availability, also disable default visibility
+                                                                                const newDefaultVisible = newValue
+                                                                                    ? settings.chart.defaultVisible
+                                                                                    : { ...settings.chart.defaultVisible, [key]: false }
 
-                                                                            updateSetting('chart', {
-                                                                                ...settings.chart,
-                                                                                selectableInLegend: {
-                                                                                    ...settings.chart.selectableInLegend,
-                                                                                    [key]: newValue
-                                                                                },
-                                                                                defaultVisible: newDefaultVisible
-                                                                            })
-                                                                        }}
-                                                                    />
+                                                                                updateSetting('chart', {
+                                                                                    ...settings.chart,
+                                                                                    selectableInLegend: {
+                                                                                        ...settings.chart.selectableInLegend,
+                                                                                        [key]: newValue
+                                                                                    },
+                                                                                    defaultVisible: newDefaultVisible
+                                                                                })
+                                                                            }}
+                                                                        />
+                                                                        <span className="text-sm font-medium text-secondary-foreground flex-1">{label}</span>
+                                                                    </label>
                                                                 ))}
                                                             </div>
                                                         </div>
@@ -337,7 +374,7 @@ export default function SettingsPage({ onBack }) {
                                             <SortableBlocItem key={key} id={key}>
                                                 <BlocSettings
                                                     title={t('settings.blocs.mosaic')}
-                                                    icon={<FiGrid className="text-3xl text-purple-500" />}
+                                                    icon={<LayoutGrid className="size-6 text-purple-500" />}
                                                     isActive={settings.blocs.mosaic}
                                                     onToggle={() => toggleSetting('blocs.mosaic')}
                                                     collapsible
@@ -385,9 +422,9 @@ function SortableBlocItem({ id, children }) {
                     <div
                         {...attributes}
                         {...listeners}
-                        className="p-2 -ml-2 cursor-grab active:cursor-grabbing text-text-muted hover:text-text hover:bg-card-alt rounded-lg transition-colors touch-none"
+                        className="p-2 -ml-2 cursor-grab active:cursor-grabbing text-muted-foreground hover:text-foreground hover:bg-muted rounded-lg transition-colors touch-none"
                     >
-                        <FiMenu size={20} />
+                        <GripVertical size={20} />
                     </div>
                 )
             })}
@@ -401,7 +438,7 @@ function BlocSettings({ title, icon, isActive, onToggle, collapsible = false, ch
 
     return (
         <div className={`
-      bg-card rounded-3xl shadow-soft border border-border/50 overflow-hidden transition-all duration-300
+      bg-card rounded-2xl shadow-soft border border-border/50 overflow-hidden transition-all duration-300
       ${!isActive ? 'opacity-70 grayscale-[0.5]' : 'opacity-100'}
       ${isDragging ? 'shadow-xl scale-[1.02] ring-2 ring-primary/50 opacity-90' : ''}
     `}>
@@ -410,14 +447,14 @@ function BlocSettings({ title, icon, isActive, onToggle, collapsible = false, ch
                     {dragHandle}
                     <div className={`
             w-12 h-12 rounded-2xl flex items-center justify-center text-2xl transition-colors
-            ${isActive ? 'bg-card-alt shadow-sm' : 'bg-transparent border border-border/50'}
+            ${isActive ? 'bg-muted shadow-sm' : 'bg-transparent border border-border/50'}
           `}>
                         {icon}
                     </div>
                     <span className="font-semibold text-lg">{title}</span>
                 </div>
 
-                <Switch checked={isActive} onChange={onToggle} />
+                <Switch checked={isActive} onCheckedChange={onToggle} />
             </div>
 
             {/* Render children if active and collapsible - HIDE when dragging (local or global) */}
@@ -433,57 +470,8 @@ function BlocSettings({ title, icon, isActive, onToggle, collapsible = false, ch
 function SettingsToggle({ label, checked, onChange }) {
     return (
         <div className="flex items-center justify-between py-2 cursor-pointer" onClick={onChange}>
-            <span className="text-sm font-medium text-text-secondary">{label}</span>
-            <Switch checked={checked} onChange={onChange} />
+            <span className="text-sm font-medium text-secondary-foreground">{label}</span>
+            <Switch checked={checked} onCheckedChange={onChange} />
         </div>
-    )
-}
-
-function Switch({ checked, onChange }) {
-    return (
-        <button
-            role="switch"
-            aria-checked={checked}
-            onClick={(e) => {
-                e.stopPropagation()
-                onChange()
-            }}
-            className={`
-        relative inline-flex h-7 w-12 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none shadow-sm
-        ${checked ? 'bg-primary' : 'bg-slate-200 dark:bg-slate-700'}
-      `}
-        >
-            <span
-                className={`
-          pointer-events-none inline-block h-6 w-6 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out
-          ${checked ? 'translate-x-5' : 'translate-x-0'}
-        `}
-            />
-        </button>
-    )
-}
-
-function Checkbox({ label, checked, onChange, disabled }) {
-    return (
-        <button
-            type="button"
-            className={`
-                flex items-center gap-3 p-3 rounded-xl border w-full text-left transition-all active:scale-[0.99]
-                ${disabled
-                    ? 'bg-card-alt/50 border-border/30 opacity-60 cursor-not-allowed grayscale'
-                    : 'bg-card-alt border-border/50 cursor-pointer hover:bg-card-alt/80'
-                }
-            `}
-            onClick={!disabled ? onChange : undefined}
-            disabled={disabled}
-        >
-            <div className={`
-        flex items-center justify-center w-5 h-5 rounded-md border transition-all duration-200 shrink-0
-        ${checked ? 'bg-primary border-primary text-white' : 'bg-transparent border-text-muted/40'}
-      `}>
-                {checked && <FiCheck size={14} />}
-            </div>
-            <span className="text-sm font-medium text-text-secondary flex-1">{label}</span>
-        </button>
     )
 }

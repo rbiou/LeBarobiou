@@ -17,7 +17,8 @@ import { fetchTodayNormals, fetchMonthlyPrecipNormals } from './api/openMeteo.js
 import { formatDateTime, formatDecimal, formatDuration } from './utils/formatters'
 import heroCover from '/header.jpeg'
 import PullToRefresh from './components/ui/PullToRefresh'
-import { HiCheck } from 'react-icons/hi2'
+import { Toaster } from './components/ui/sonner'
+import { toast } from 'sonner'
 import { FiSettings } from 'react-icons/fi'
 
 function useInstallPrompt() {
@@ -64,18 +65,6 @@ function getParisStartOfDay(date) {
   return parisInstant
 }
 
-function SuccessToast({ visible }) {
-  const { t } = useSettings()
-  return (
-    <div className={`fixed top-4 left-1/2 -translate-x-1/2 z-[70] transition-all duration-300 pointer-events-none ${visible ? 'opacity-100 translate-y-0' : 'opacity-0 -translate-y-4'}`}>
-      <div className="flex items-center gap-2 px-4 py-2 rounded-full shadow-lg bg-green-500 text-white font-medium text-sm backdrop-blur-md">
-        <HiCheck className="text-lg" />
-        <span>{t('app.updated')}</span>
-      </div>
-    </div>
-  )
-}
-
 export default function App() {
   return (
     <ThemeProvider>
@@ -111,7 +100,6 @@ function AppContent() {
   const [gust7d, setGust7d] = useState({ value: null, when: null })
   const [gust30d, setGust30d] = useState({ value: null, when: null })
   const [chartRange, setChartRange] = useState('day')
-  const [showSuccessToast, setShowSuccessToast] = useState(false)
 
   const { canInstall, promptInstall } = useInstallPrompt()
 
@@ -253,8 +241,7 @@ function AppContent() {
       }
 
       setLastUpdate(new Date())
-      setShowSuccessToast(true)
-      setTimeout(() => setShowSuccessToast(false), 2000)
+      toast.success(t('app.updated'))
 
     } catch (e) {
       console.error(e)
@@ -789,7 +776,7 @@ function AppContent() {
         </div>
         <p className="text-center text-xs text-text-muted">{t('app.footer')} — © {new Date().getFullYear()}</p>
       </footer>
-      <SuccessToast visible={showSuccessToast} />
+      <Toaster position="top-center" />
     </div>
   )
 }
