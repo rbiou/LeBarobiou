@@ -1,7 +1,7 @@
 import React, { useState, useMemo } from 'react'
 import { useSettings } from '../context/SettingsContext'
 import WeatherChart from './WeatherChart'
-import SwipeableTabs from './ui/SwipeableTabs'
+import { Tabs, TabsList, TabsTrigger } from './ui/tabs'
 
 export default function MosaicBlock({ hourly, hourly7d, dailyHistory, minLoading, historyLoading, error }) {
     const { t, settings } = useSettings()
@@ -42,12 +42,19 @@ export default function MosaicBlock({ hourly, hourly7d, dailyHistory, minLoading
                         )}
                     </div>
                 </div>
-                <SwipeableTabs
-                    options={RANGE_OPTIONS} value={range} onChange={handleRangeChange}
-                    className="h-10 w-full sm:w-64 rounded-full border border-border bg-card shadow-sm p-1 transition-all"
-                    itemClassName="rounded-full text-xs font-medium" activeItemClassName="text-primary font-bold dark:text-white"
-                    inactiveItemClassName="text-text-muted hover:text-text-secondary" indicatorClassName="rounded-full bg-primary/10 dark:bg-primary/20 border border-primary/50 scale-x-100"
-                />
+                <Tabs value={range} onValueChange={handleRangeChange} className="w-full sm:w-64">
+                    <TabsList className="w-full h-10 rounded-full bg-muted p-1">
+                        {RANGE_OPTIONS.map(({ value, label }) => (
+                            <TabsTrigger
+                                key={value}
+                                value={value}
+                                className="flex-1 rounded-full text-xs font-medium data-active:bg-background data-active:text-foreground data-active:shadow-sm"
+                            >
+                                {label}
+                            </TabsTrigger>
+                        ))}
+                    </TabsList>
+                </Tabs>
             </div>
 
             {/* Mosaic Grid: 1 col mobile, 2 cols tablet+ */}

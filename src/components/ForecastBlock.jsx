@@ -276,9 +276,9 @@ export default function ForecastBlock({ lat, lon, lastUpdate }) {
                                         {getDayName(day.date)}
                                     </span>
                                     <div className="text-[10px] font-medium flex gap-1.5 items-center">
-                                        <span className="text-blue-400">{Math.round(day.dayTempMin)}°</span>
+                                        <span className="text-chart-1">{Math.round(day.dayTempMin)}°</span>
                                         <span className="text-border">/</span>
-                                        <span className="text-red-400">{Math.round(day.dayTempMax)}°</span>
+                                        <span className="text-chart-3">{Math.round(day.dayTempMax)}°</span>
                                     </div>
                                 </div>
 
@@ -289,14 +289,14 @@ export default function ForecastBlock({ lat, lon, lastUpdate }) {
                                             <div className="h-6 flex items-center justify-center">
                                                 {morning ? <MorningIcon className={`text-xl ${morningInfo.style}`} /> : <span className="text-xs">-</span>}
                                             </div>
-                                            {morning && morning.precipProb > 20 && <span className="text-[9px] font-bold text-blue-400">{morning.precipProb}%</span>}
+                                            {morning && morning.precipProb > 20 && <span className="text-[9px] font-bold text-chart-1">{morning.precipProb}%</span>}
                                         </div>
                                         {/* Afternoon */}
                                         <div className={`flex flex-col items-center justify-center p-2 gap-1 flex-1 ${afternoon ? '' : 'opacity-50'}`}>
                                             <div className="h-6 flex items-center justify-center">
                                                 {afternoon ? <AfternoonIcon className={`text-xl ${afternoonInfo.style}`} /> : <span className="text-xs">-</span>}
                                             </div>
-                                            {afternoon && afternoon.precipProb > 20 && <span className="text-[9px] font-bold text-blue-500">{afternoon.precipProb}%</span>}
+                                            {afternoon && afternoon.precipProb > 20 && <span className="text-[9px] font-bold text-chart-1">{afternoon.precipProb}%</span>}
                                         </div>
                                     </div>
                                 </div>
@@ -362,8 +362,8 @@ export default function ForecastBlock({ lat, lon, lastUpdate }) {
                                                 <div className="h-4 w-full flex items-center justify-center">
                                                     {h.precipProb > 0 && (
                                                         <div className="flex items-center gap-0.5 animate-in fade-in duration-300">
-                                                            <WeatherIcons.WiRaindrop className="text-sm text-blue-400" />
-                                                            <span className="text-[9px] font-bold text-blue-400 leading-none">
+                                                            <WeatherIcons.WiRaindrop className="text-sm text-chart-1" />
+                                                            <span className="text-[9px] font-bold text-chart-1 leading-none">
                                                                 {h.precipProb}%
                                                             </span>
                                                         </div>

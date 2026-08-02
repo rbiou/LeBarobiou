@@ -3,8 +3,8 @@ import { ResponsiveContainer, ComposedChart, Line, XAxis, YAxis, Tooltip, Cartes
 import { useTheme } from '../context/ThemeContext'
 import { useSettings } from '../context/SettingsContext'
 import { detectBrowserLanguage } from '../utils/i18n'
-import SwipeableTabs from './ui/SwipeableTabs'
-import { FiMaximize, FiMinimize, FiX, FiChevronLeft, FiChevronRight } from 'react-icons/fi'
+import { Tabs, TabsList, TabsTrigger } from './ui/tabs'
+import { Maximize, Minimize, X, ChevronLeft, ChevronRight } from 'lucide-react'
 
 function floorToHour(date) {
   const d = new Date(date)
@@ -460,28 +460,33 @@ export default function WeatherChart({
       {!hideControls ? (
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between mb-2">
           <div className="flex items-center gap-2">
-            <button onClick={toggleFullScreen} className="p-1.5 rounded-full hover:bg-card-alt text-text-muted hover:text-text transition-colors" title={isFullScreen ? t('chart.exitFullscreen') : t('chart.fullscreen')}>
-              {isFullScreen ? <FiMinimize size={18} /> : <FiMaximize size={18} />}
+            <button onClick={toggleFullScreen} className="p-1.5 rounded-full hover:bg-muted text-muted-foreground hover:text-foreground transition-colors" title={isFullScreen ? t('chart.exitFullscreen') : t('chart.fullscreen')}>
+              {isFullScreen ? <Minimize className="size-4" /> : <Maximize className="size-4" />}
             </button>
-            <div className="text-sm font-medium text-text-secondary">
+            <div className="text-sm font-medium text-secondary-foreground">
               {t('chart.statistics').replace('{range}', range === 'day' ? t('chart.range.day') : (range === '7d' ? t('chart.range.week') : t('chart.range.month')))}
             </div>
           </div>
-          <SwipeableTabs
-            options={[
-              { value: 'day', label: t('chart.range.day') },
-              { value: '7d', label: t('chart.range.week') },
-              { value: '30d', label: t('chart.range.month') },
-            ]}
-            value={range}
-            onChange={handleRangeChange}
-            className={`h-10 w-full ${shouldRotate ? 'w-64' : 'sm:w-64'} rounded-full border border-border bg-card shadow-sm p-1 transition-all`}
-            itemClassName="rounded-full text-xs font-medium" activeItemClassName="text-primary font-bold dark:text-white"
-            inactiveItemClassName="text-text-muted hover:text-text-secondary" indicatorClassName="rounded-full bg-primary/10 dark:bg-primary/20 border border-primary/50 scale-x-100"
-          />
+          <Tabs value={range} onValueChange={handleRangeChange} className={`w-full ${shouldRotate ? 'w-64' : 'sm:w-64'}`}>
+            <TabsList className="w-full h-10 rounded-full bg-muted p-1">
+              {[
+                { value: 'day', label: t('chart.range.day') },
+                { value: '7d', label: t('chart.range.week') },
+                { value: '30d', label: t('chart.range.month') },
+              ].map(({ value, label }) => (
+                <TabsTrigger
+                  key={value}
+                  value={value}
+                  className="flex-1 rounded-full text-xs font-medium data-active:bg-background data-active:text-foreground data-active:shadow-sm"
+                >
+                  {label}
+                </TabsTrigger>
+              ))}
+            </TabsList>
+          </Tabs>
           {isFullScreen && (
-            <button onClick={toggleFullScreen} className="absolute top-4 right-4 p-2 rounded-full bg-card-alt/50 hover:bg-card-alt text-text-muted hover:text-text transition-colors sm:hidden" style={{ zIndex: 60 }}>
-              <FiX size={20} />
+            <button onClick={toggleFullScreen} className="absolute top-4 right-4 p-2 rounded-full bg-muted/50 hover:bg-muted text-muted-foreground hover:text-foreground transition-colors sm:hidden" style={{ zIndex: 60 }}>
+              <X className="size-4" />
             </button>
           )}
         </div>
@@ -496,7 +501,7 @@ export default function WeatherChart({
       )}
 
       {error && (
-        <div className="mb-3 rounded-xl border border-amber-200 dark:border-amber-900/30 bg-amber-50 dark:bg-amber-900/20 px-4 py-3 text-sm text-amber-700 dark:text-amber-400">
+        <div className="mb-3 rounded-xl border border-chart-2/30 bg-chart-2/10 px-4 py-3 text-sm text-chart-2">
           {error}
         </div>
       )}
@@ -514,8 +519,8 @@ export default function WeatherChart({
             <div className="relative shrink-0 border-b border-border/50 mb-0 group">
               {canScrollLeft && (
                 <div className="absolute left-0 top-0 bottom-0 z-10 flex items-center bg-gradient-to-r from-card via-card to-transparent pl-0 pr-4">
-                  <button onClick={() => scrollLegend('left')} className="p-1 rounded-full bg-card-alt border border-border shadow-sm hover:bg-card-alt/80 text-text-muted hover:text-text transition-colors">
-                    <FiChevronLeft size={14} />
+                  <button onClick={() => scrollLegend('left')} className="p-1 rounded-full bg-muted border border-border shadow-sm hover:bg-muted/80 text-muted-foreground hover:text-foreground transition-colors">
+                    <ChevronLeft className="size-3.5" />
                   </button>
                 </div>
               )}
@@ -535,8 +540,8 @@ export default function WeatherChart({
               </div>
               {canScrollRight && (
                 <div className="absolute right-0 top-0 bottom-0 z-10 flex items-center bg-gradient-to-l from-card via-card to-transparent pr-0 pl-4">
-                  <button onClick={() => scrollLegend('right')} className="p-1 rounded-full bg-card-alt border border-border shadow-sm hover:bg-card-alt/80 text-text-muted hover:text-text transition-colors">
-                    <FiChevronRight size={14} />
+                  <button onClick={() => scrollLegend('right')} className="p-1 rounded-full bg-muted border border-border shadow-sm hover:bg-muted/80 text-muted-foreground hover:text-foreground transition-colors">
+                    <ChevronRight className="size-3.5" />
                   </button>
                 </div>
               )}
