@@ -1,31 +1,32 @@
 import React from 'react';
 import { WiSunrise, WiMoonAltFull } from 'react-icons/wi';
-import { FiSun, FiMoon } from 'react-icons/fi';
+import { Sun, Moon } from 'lucide-react';
 import { formatClock, formatDateLabel, formatDaysUntil } from '../utils/formatters';
 import { useSettings } from '../context/SettingsContext';
 import { detectBrowserLanguage } from '../utils/i18n';
+import { Card, CardContent } from './ui/card';
 
 const SunMoonCard = ({ sun, sunSummary, sunTomorrow, moon, moonCycle, moonNextPhases }) => {
     const { settings, t } = useSettings();
     const locale = settings.language === 'auto' ? detectBrowserLanguage() : (settings.language === 'en' ? 'en-US' : 'fr-FR');
 
     return (
-        <div className="rounded-2xl bg-card p-4 shadow-soft sm:p-6 sm:col-span-2 lg:col-span-3">
-            <div className="flex flex-col gap-4">
+        <Card className="p-4 sm:p-6 sm:col-span-2 lg:col-span-3">
+            <CardContent className="p-0 flex flex-col gap-4">
                 <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
-                    <div className="text-sm font-medium text-text-secondary">{t('sun.title', 'Soleil et Lune')}</div>
+                    <div className="text-sm font-medium text-secondary-foreground">{t('sun.title', 'Soleil et Lune')}</div>
                 </div>
 
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
                     {/* SUN BENTO */}
-                    <section className="relative overflow-hidden rounded-2xl border border-border bg-card-alt p-5 flex flex-col justify-between min-h-[160px]">
+                    <section className="relative overflow-hidden rounded-2xl border border-border bg-muted p-5 flex flex-col justify-between min-h-[160px]">
                         {/* Header */}
                         <div className="flex items-center justify-between mb-4 relative z-10">
-                            <div className="flex items-center gap-2 text-text-muted font-semibold tracking-wide uppercase text-[10px] sm:text-[11px]">
-                                <FiSun className="text-sm" /> {t('sun.sun_title', 'Soleil')}
+                            <div className="flex items-center gap-2 text-muted-foreground font-semibold tracking-wide uppercase text-[10px] sm:text-[11px]">
+                                <Sun className="size-4" /> {t('sun.sun_title', 'Soleil')}
                             </div>
                             {sun?.sunrise && sun?.sunset && (
-                                <div className="text-[10px] font-bold text-text-muted uppercase tracking-wider">
+                                <div className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">
                                     {t('sun.duration', 'Durée :')} {sunSummary.lengthLabel}
                                 </div>
                             )}
@@ -43,13 +44,13 @@ const SunMoonCard = ({ sun, sunSummary, sunTomorrow, moon, moonCycle, moonNextPh
 
                                 {/* Enhanced Progress Bar */}
                                 <div className="flex flex-col gap-2">
-                                    <div className="relative h-2.5 w-full overflow-hidden rounded-full bg-gradient-to-r from-amber-100 via-sky-100 to-rose-100 dark:from-amber-900/30 dark:via-sky-900/30 dark:to-rose-900/30 shadow-inner">
+                                    <div className="relative h-2.5 w-full overflow-hidden rounded-full bg-gradient-to-r from-chart-2/30 via-chart-1/30 to-chart-3/30 shadow-inner">
                                         <div
-                                            className="absolute inset-y-0 left-0 rounded-full bg-gradient-to-r from-amber-400 via-sky-400 to-rose-400 transition-all duration-1000 ease-out"
+                                            className="absolute inset-y-0 left-0 rounded-full bg-gradient-to-r from-chart-2 via-chart-1 to-chart-3 transition-all duration-1000 ease-out"
                                             style={{ width: `${sunSummary.progressPct}%` }}
                                         />
                                         <div
-                                            className="absolute top-1/2 h-4 w-4 -translate-x-1/2 -translate-y-1/2 rounded-full border-2 border-white dark:border-slate-700 bg-amber-400 shadow-sm transition-all duration-1000 ease-out z-10"
+                                            className="absolute top-1/2 h-4 w-4 -translate-x-1/2 -translate-y-1/2 rounded-full border-2 border-background bg-chart-2 shadow-sm transition-all duration-1000 ease-out z-10"
                                             style={{ 
                                                 left: `${sunSummary.progressPct}%`,
                                                 backgroundColor: sunSummary.progressPct > 50 ? '#fb923c' : '#fbbf24'
@@ -58,39 +59,39 @@ const SunMoonCard = ({ sun, sunSummary, sunTomorrow, moon, moonCycle, moonNextPh
                                     </div>
                                     <div className="flex items-center justify-between mt-1 px-1">
                                         <div className="flex flex-col">
-                                            <span className="text-[9.5px] font-semibold text-text-muted uppercase">{t('sun.rise')}</span>
-                                            <span className="text-base font-bold tracking-tight text-text">{formatClock(sun.sunrise, locale)}</span>
+                                            <span className="text-[9.5px] font-semibold text-muted-foreground uppercase">{t('sun.rise')}</span>
+                                            <span className="text-base font-bold tracking-tight text-foreground">{formatClock(sun.sunrise, locale)}</span>
                                         </div>
                                         <div className="flex flex-col text-right">
-                                            <span className="text-[9.5px] font-semibold text-text-muted uppercase">{t('sun.set')}</span>
-                                            <span className="text-base font-bold tracking-tight text-text">{formatClock(sun.sunset, locale)}</span>
+                                            <span className="text-[9.5px] font-semibold text-muted-foreground uppercase">{t('sun.set')}</span>
+                                            <span className="text-base font-bold tracking-tight text-foreground">{formatClock(sun.sunset, locale)}</span>
                                         </div>
                                     </div>
                                 </div>
 
                                 {sunTomorrow?.sunrise && (
-                                    <div className="text-[10.5px] font-medium text-text-muted text-center flex items-center justify-center gap-1 -mt-1 pb-1">
+                                    <div className="text-[10.5px] font-medium text-muted-foreground text-center flex items-center justify-center gap-1 -mt-1 pb-1">
                                         <WiSunrise className="text-base opacity-70" /> {t('sun.tomorrow')} : {formatClock(sunTomorrow.sunrise, locale)}
                                     </div>
                                 )}
                             </div>
                         ) : (
-                            <div className="flex flex-1 items-center justify-center text-sm font-medium text-text-muted">{t('sun.unavailable')}</div>
+                            <div className="flex flex-1 items-center justify-center text-sm font-medium text-muted-foreground">{t('sun.unavailable')}</div>
                         )}
                         
                         {/* Subtle Amber Glow */}
-                        <div className="pointer-events-none absolute -top-10 -left-10 h-32 w-32 rounded-full bg-amber-500/5 blur-3xl" />
+                        <div className="pointer-events-none absolute -top-10 -left-10 h-32 w-32 rounded-full bg-chart-2/5 blur-3xl" />
                     </section>
 
                     {/* MOON BENTO */}
-                    <section className="relative overflow-hidden rounded-2xl border border-border bg-card-alt p-5 flex flex-col justify-between min-h-[160px]">
+                    <section className="relative overflow-hidden rounded-2xl border border-border bg-muted p-5 flex flex-col justify-between min-h-[160px]">
                         {/* Header */}
                         <div className="flex items-center justify-between mb-4 relative z-10">
-                            <div className="flex items-center gap-2 text-text-muted font-semibold tracking-wide uppercase text-[10px] sm:text-[11px]">
-                                <FiMoon className="text-sm" /> {t('moon.moon_title')}
+                            <div className="flex items-center gap-2 text-muted-foreground font-semibold tracking-wide uppercase text-[10px] sm:text-[11px]">
+                                <Moon className="size-4" /> {t('moon.moon_title')}
                             </div>
                             {moonCycle.label && (
-                                <div className="text-[10px] font-bold text-indigo-500/80 dark:text-indigo-300 uppercase tracking-wider bg-indigo-50 dark:bg-indigo-900/20 px-2 py-0.5 rounded-full border border-indigo-100 dark:border-indigo-800">
+                                <div className="text-[10px] font-bold text-chart-4/80 uppercase tracking-wider bg-chart-4/10 px-2 py-0.5 rounded-full border border-chart-4/20">
                                     {moonCycle.label}
                                 </div>
                             )}
@@ -103,7 +104,7 @@ const SunMoonCard = ({ sun, sunSummary, sunTomorrow, moon, moonCycle, moonNextPh
                                 <div className="text-6xl drop-shadow-md transform transition-transform hover:scale-105 duration-300">
                                     {moon?.phaseEmoji ?? <WiMoonAltFull />}
                                 </div>
-                                <div className="text-[13px] font-bold tracking-tight text-text mt-1">
+                                <div className="text-[13px] font-bold tracking-tight text-foreground mt-1">
                                     {moon?.phaseKey ? t(`moon.phase.${moon.phaseKey}`) : (moon?.phaseName || t('moon.phase_unknown'))}
                                 </div>
                             </div>
@@ -111,24 +112,24 @@ const SunMoonCard = ({ sun, sunSummary, sunTomorrow, moon, moonCycle, moonNextPh
                             {/* Next Phases Divider & Stats */}
                             <div className="grid grid-cols-2 gap-4 mt-auto pt-4 border-t border-border/70">
                                 <div className="flex flex-col gap-0.5">
-                                    <span className="text-[9.5px] font-semibold text-text-muted uppercase tracking-wider">{t('moon.next_full')} 🌕</span>
-                                    <span className="text-sm font-bold text-text">{formatDateLabel(moonNextPhases.nextFull, locale)}</span>
-                                    <span className="text-[10px] font-medium text-text-secondary">{formatDaysUntil(moonNextPhases.nextFull, t)}</span>
+                                    <span className="text-[9.5px] font-semibold text-muted-foreground uppercase tracking-wider">{t('moon.next_full')} 🌕</span>
+                                    <span className="text-sm font-bold text-foreground">{formatDateLabel(moonNextPhases.nextFull, locale)}</span>
+                                    <span className="text-[10px] font-medium text-secondary-foreground">{formatDaysUntil(moonNextPhases.nextFull, t)}</span>
                                 </div>
                                 <div className="flex flex-col gap-0.5 text-right">
-                                    <span className="text-[9.5px] font-semibold text-text-muted uppercase tracking-wider">🌑 {t('moon.next_new')}</span>
-                                    <span className="text-sm font-bold text-text">{formatDateLabel(moonNextPhases.nextNew, locale)}</span>
-                                    <span className="text-[10px] font-medium text-text-secondary">{formatDaysUntil(moonNextPhases.nextNew, t)}</span>
+                                    <span className="text-[9.5px] font-semibold text-muted-foreground uppercase tracking-wider">🌑 {t('moon.next_new')}</span>
+                                    <span className="text-sm font-bold text-foreground">{formatDateLabel(moonNextPhases.nextNew, locale)}</span>
+                                    <span className="text-[10px] font-medium text-secondary-foreground">{formatDaysUntil(moonNextPhases.nextNew, t)}</span>
                                 </div>
                             </div>
                         </div>
 
                         {/* Subtle Indigo Glow */}
-                        <div className="pointer-events-none absolute -bottom-10 -right-10 h-32 w-32 rounded-full bg-indigo-500/5 blur-3xl" />
+                        <div className="pointer-events-none absolute -bottom-10 -right-10 h-32 w-32 rounded-full bg-chart-4/5 blur-3xl" />
                     </section>
                 </div>
-            </div>
-        </div>
+            </CardContent>
+        </Card>
     );
 };
 

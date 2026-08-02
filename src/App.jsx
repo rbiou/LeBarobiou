@@ -19,7 +19,7 @@ import heroCover from '/header.jpeg'
 import PullToRefresh from './components/ui/PullToRefresh'
 import { Toaster } from './components/ui/sonner'
 import { toast } from 'sonner'
-import { FiSettings } from 'react-icons/fi'
+import { Settings } from 'lucide-react'
 
 function useInstallPrompt() {
   const [deferredPrompt, setDeferredPrompt] = useState(null)
@@ -597,7 +597,7 @@ function AppContent() {
                     className="flex justify-center items-center rounded-full bg-black/20 p-2.5 sm:p-3 text-white backdrop-blur-md border border-white/10 transition-all hover:bg-black/40 hover:scale-105 active:scale-95 shadow-sm"
                     title={t('settings.title')}
                   >
-                    <FiSettings className="text-lg sm:text-xl transition-transform duration-500 hover:rotate-90" />
+                    <Settings className="size-5 sm:size-6 transition-transform duration-500 hover:rotate-90" />
                   </button>
                </div>
 
@@ -770,7 +770,7 @@ function AppContent() {
             className="h-10 flex items-center gap-2 px-5 rounded-full bg-card hover:bg-card-alt text-text transition-all shadow-sm border border-border active:scale-95"
             aria-label={t('settings.title')}
           >
-            <FiSettings size={18} className="text-text-secondary" />
+            <Settings className="size-4 text-text-secondary" />
             <span className="text-xs font-medium">{t('settings.title')}</span>
           </button>
         </div>

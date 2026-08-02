@@ -2,7 +2,7 @@ import React, { useEffect, useState, useRef, useMemo } from 'react';
 import { useSettings } from '../context/SettingsContext';
 import { fetchForecast, getWeatherInfo } from '../api/openMeteo';
 import * as WeatherIcons from 'react-icons/wi';
-import { FiChevronLeft, FiChevronRight } from 'react-icons/fi';
+import { ChevronLeft, ChevronRight } from 'lucide-react';
 
 // Hook for scroll logic
 function useScrollable() {
@@ -45,7 +45,7 @@ const ScrollArrow = ({ direction, onClick }) => (
             onClick={(e) => { e.stopPropagation(); onClick(); }}
             className="p-1 rounded-full bg-card-alt border border-border/50 shadow-sm hover:bg-card-alt/80 text-text-muted hover:text-text transition-colors"
         >
-            {direction === 'left' ? <FiChevronLeft size={14} /> : <FiChevronRight size={14} />}
+            {direction === 'left' ? <ChevronLeft className="size-3.5" /> : <ChevronRight className="size-3.5" />}
         </button>
     </div>
 );

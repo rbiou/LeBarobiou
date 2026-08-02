@@ -1,5 +1,5 @@
 import React, { useRef, useState, useEffect } from 'react'
-import { HiArrowPath, HiArrowDown } from 'react-icons/hi2'
+import { RefreshCw, ArrowDown } from 'lucide-react'
 import { useSettings } from '../../context/SettingsContext'
 
 export default function PullToRefresh({ onRefresh, isRefreshing, children }) {
@@ -92,10 +92,10 @@ export default function PullToRefresh({ onRefresh, isRefreshing, children }) {
             >
                 <div className="flex items-center justify-center gap-2">
                     {isRefreshing ? (
-                        <HiArrowPath className="text-lg animate-spin" />
+                        <RefreshCw className="size-4 animate-spin" />
                     ) : (
-                        <HiArrowDown
-                            className="text-lg transition-transform duration-200"
+                        <ArrowDown
+                            className="size-4 transition-transform duration-200"
                             style={{
                                 transform: `rotate(${isTriggered ? -180 : 0}deg)`
                             }}
@@ -114,7 +114,7 @@ export default function PullToRefresh({ onRefresh, isRefreshing, children }) {
                     disabled={isRefreshing}
                     className="flex items-center gap-2 px-4 py-2 text-xs text-text-muted hover:text-text bg-card hover:bg-card-alt border border-border rounded-full transition-all cursor-pointer disabled:cursor-wait focus:outline-none shadow-sm hover:shadow active:scale-95"
                 >
-                    <HiArrowPath className={`text-sm ${isRefreshing ? 'animate-spin' : ''}`} />
+                    <RefreshCw className={`size-3.5 ${isRefreshing ? 'animate-spin' : ''}`} />
                     <span className="font-medium">
                         {isRefreshing ? t('app.refreshing') : t('app.refresh')}
                     </span>
