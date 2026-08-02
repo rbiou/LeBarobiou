@@ -213,6 +213,7 @@ Use a simple standard workflow:
 - Open a pull request when useful for review; small fixes may go directly to `main` if that matches current practice
 - Keep commits focused and descriptive
 - Do not commit generated artifacts (`dist/`) unless the repo already does so intentionally
+- **Never attempt large refactors in a single pass.** Prefer small, reviewable increments: several focused commits, multiple PRs, and changes that are easy to review.
 
 No special branching rules beyond this are defined.
 
